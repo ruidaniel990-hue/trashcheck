@@ -1,0 +1,494 @@
+// ── Game Engine v4 ──
+// Tetris-style LANE system: swipe moves items to lanes, items land in bins.
+// No instant sorting - items fall into their lane's bin.
+
+import { CATEGORIES } from './game-data.js';
+import { CONFIG, getScoreThreshold, getCurrentFallSpeed, getCurrentSpawnInterval, getComboTier, getLevelDuration } from './game-config.js';
+import { state, resetState, resetLevelState, getLevelAccuracy } from '../state/game-state.js';
+import { showScreen } from '../ui/screen-manager.js';
+import { resetHUD, updateScore, updateCombo, bumpCombo, updateLevel, updateHotspot } from '../ui/hud.js';
+import { showPause, hidePause, showLevelUpFlash } from '../ui/overlay-manager.js';
+import { floatPoints, flashBin, screenShake, showComboTier, showComboReset, flashScreen, popScore } from '../effects/animation-manager.js';
+import { startTimer, stopTimer } from './game-timer.js';
+import { getHighscore, setHighscore } from '../storage/storage-bridge.js';
+import { earnCoins, getBalance } from '../economy/coin-manager.js';
+import { getHotspotForLevel } from '../level/level-definitions.js';
+import { getLevelFallTime, getLevelSpawnDelay, getItemsToComplete, hotspotChanges } from '../level/level-manager.js';
+import { setCurrentHotspot, getHotspotBinPreview } from '../hotspot/hotspot-manager.js';
+import { showDeliverySequence, showResultsScreen, showHub } from '../base/hub-manager.js';
+import { renderShop } from '../shop/shop-screen.js';
+import { renderAvatarScreen } from '../avatar/avatar-screen.js';
+import { hasProfile, getDisplayName } from '../auth/auth-manager.js';
+import { playAsGuest, saveName, renderProfileScreen, updateStartScreenProfile, handleLogout } from '../auth/auth-screen.js';
+
+// ── State ──
+let animFrameId = null;
+let lastFrameTime = 0;
+let spawnTimer = 0;
+let softDropActive = false;
+
+// Lane X positions (CSS left%)
+const LANE_X = ['20%', '50%', '80%'];
+
+// ══════════════════════════════════════════════
+// ── BINS ──
+// ══════════════════════════════════════════════
+
+function renderBins() {
+  const row = document.getElementById('bins-row');
+  if (!row) return;
+  const arrows = ['◀ LINKS', '⬇ MITTE', 'RECHTS ▶'];
+  row.innerHTML = state.activeBins.map((key, i) => {
+    const c = CATEGORIES[key];
+    return `<div class="bin ${c.cls}" id="bin-${i}">
+      <div class="bin-arrow">${arrows[i]}</div>
+      <div class="bin-icon">${c.icon}</div>
+      <div class="bin-label">${c.name}</div>
+    </div>`;
+  }).join('');
+}
+
+function applyHotspotBins() {
+  const hotspot = state.currentHotspot;
+  if (hotspot) state.activeBins = hotspot.categories.slice(0, CONFIG.ACTIVE_BINS_COUNT);
+  renderBins();
+}
+
+// ══════════════════════════════════════════════
+// ── SCREENS ──
+// ══════════════════════════════════════════════
+
+function showLevelPreview() {
+  const hotspot = state.currentHotspot;
+  if (!hotspot) return;
+  const setText = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
+  setText('preview-icon', hotspot.icon);
+  setText('preview-level', 'Level ' + state.level);
+  setText('preview-name', hotspot.name);
+  setText('preview-desc', hotspot.description);
+  const previewBins = document.getElementById('preview-bins');
+  if (previewBins) {
+    const binData = getHotspotBinPreview(hotspot);
+    previewBins.innerHTML = binData.map(b =>
+      `<div class="preview-bin ${b.cls}">
+        <div class="preview-bin-arrow">${b.direction}</div>
+        <div class="preview-bin-icon">${b.icon}</div>
+        <div class="preview-bin-name">${b.name}</div>
+      </div>`
+    ).join('');
+  }
+  showScreen('screen-preview');
+}
+
+function showTransition(fromHotspot, toHotspot, callback) {
+  const setText = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
+  setText('transition-from-icon', fromHotspot.icon);
+  setText('transition-from-name', fromHotspot.name);
+  setText('transition-to-icon', toHotspot.icon);
+  setText('transition-to-name', toHotspot.name);
+  showScreen('screen-transition');
+  setTimeout(callback, 1800);
+}
+
+// ══════════════════════════════════════════════
+// ── BOOT & START ──
+// ══════════════════════════════════════════════
+
+export function initStart() {
+  if (!hasProfile()) { showScreen('screen-auth'); return; }
+  const setText = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
+  setText('hs-display', getHighscore());
+  setText('start-coins', getBalance());
+  updateStartScreenProfile();
+  showScreen('screen-start');
+}
+
+export function startGame() {
+  resetState();
+  resetHUD();
+  setupLevel(state.level);
+  showLevelPreview();
+}
+
+function setupLevel(level) {
+  const hotspot = getHotspotForLevel(level);
+  state.currentHotspot = hotspot;
+  state.itemsForNextLevel = getItemsToComplete(level);
+  setCurrentHotspot(hotspot);
+}
+
+export function startLevel() {
+  const zone = document.getElementById('fall-zone');
+  if (zone) zone.querySelectorAll('.swipe-item').forEach(e => e.remove());
+  hidePause();
+  hideLevelOverlays();
+  applyHotspotBins();
+  updateLevel(state.level);
+  updateHotspot(state.currentHotspot);
+  resetLevelState(state.level);
+  state.gameActive = true;
+  softDropActive = false;
+  spawnTimer = 0;
+  showScreen('screen-game');
+  startTimer(() => onLevelTimeUp());
+  lastFrameTime = performance.now();
+  startGameLoop();
+  setTimeout(() => spawnItem(), CONFIG.INITIAL_SPAWN_DELAY);
+}
+
+// ══════════════════════════════════════════════
+// ── GAME LOOP ──
+// ══════════════════════════════════════════════
+
+function startGameLoop() {
+  cancelAnimationFrame(animFrameId);
+  animFrameId = requestAnimationFrame(gameLoop);
+}
+
+function stopGameLoop() {
+  cancelAnimationFrame(animFrameId);
+  animFrameId = null;
+}
+
+function gameLoop(timestamp) {
+  if (!state.gameActive) return;
+  const dt = (timestamp - lastFrameTime) / 1000;
+  lastFrameTime = timestamp;
+  if (!state.paused) {
+    updateFallingItems(dt);
+    updateSpawnTimer(dt);
+  }
+  animFrameId = requestAnimationFrame(gameLoop);
+}
+
+function updateFallingItems(dt) {
+  let fallSpeed = getCurrentFallSpeed(state.levelTotal, state.level);
+  if (softDropActive) fallSpeed *= CONFIG.SOFT_DROP_MULTIPLIER;
+
+  for (let i = state.fallingItems.length - 1; i >= 0; i--) {
+    const fi = state.fallingItems[i];
+    fi.y += fallSpeed * dt;
+    if (fi.el) fi.el.style.top = fi.y + '%';
+    if (fi.y >= CONFIG.FALL_MISS_Y) handleLanding(fi, i);
+  }
+}
+
+export function setSoftDrop(active) {
+  softDropActive = active;
+}
+
+function updateSpawnTimer(dt) {
+  spawnTimer += dt * 1000;
+  const interval = getCurrentSpawnInterval(state.levelTotal, state.level);
+  if (spawnTimer >= interval && state.fallingItems.length < 3) {
+    spawnTimer = 0;
+    spawnItem();
+  }
+}
+
+// ══════════════════════════════════════════════
+// ── SPAWN ──
+// ══════════════════════════════════════════════
+
+function spawnItem() {
+  if (!state.gameActive || state.paused) return;
+  const binKey = state.activeBins[Math.floor(Math.random() * state.activeBins.length)];
+  const cat = CATEGORIES[binKey];
+  const item = cat.items[Math.floor(Math.random() * cat.items.length)];
+  const zone = document.getElementById('fall-zone');
+  if (!zone) return;
+
+  const el = document.createElement('div');
+  el.className = 'swipe-item spawn';
+  el.style.left = LANE_X[1]; // start in center lane
+  el.style.top = CONFIG.FALL_START_Y + '%';
+  el.style.transform = 'translateX(-50%)';
+  el.style.transition = 'left 0.15s ease-out'; // smooth lane glide
+  el.innerHTML = `<div class="item-emoji">${item.emoji}</div><div class="item-name">${item.name}</div>`;
+  zone.appendChild(el);
+
+  const fi = { el, emoji: item.emoji, name: item.name, bin: binKey, y: CONFIG.FALL_START_Y, lane: 1 };
+  state.fallingItems.push(fi);
+  state.totalItems++;
+  state.levelTotal++;
+  updateCurrentItem();
+}
+
+function updateCurrentItem() {
+  const active = state.fallingItems;
+  if (active.length > 0) {
+    const lowest = active.reduce((a, b) => a.y > b.y ? a : b);
+    state.currentItem = lowest;
+    state.itemEl = lowest.el;
+  } else {
+    state.currentItem = null;
+    state.itemEl = null;
+  }
+}
+
+// ══════════════════════════════════════════════
+// ── MOVE ITEM TO LANE (called by input) ──
+// ══════════════════════════════════════════════
+
+export function moveItemToLane(laneIndex, specificItem) {
+  if (!state.gameActive) return;
+  const fi = specificItem || state.currentItem;
+  if (!fi) return;
+  fi.lane = laneIndex;
+  if (fi.el) fi.el.style.left = LANE_X[laneIndex];
+}
+
+// ══════════════════════════════════════════════
+// ── LANDING (item reaches bottom) ──
+// ══════════════════════════════════════════════
+
+function handleLanding(fi, index) {
+  state.fallingItems.splice(index, 1);
+
+  const targetBin = state.activeBins[fi.lane];
+  const isCorrect = targetBin === fi.bin;
+  const binEl = document.getElementById('bin-' + fi.lane);
+
+  // Animate item shrinking into bin
+  if (fi.el) {
+    fi.el.style.transition = 'all 0.2s ease-in';
+    fi.el.style.top = '76%';
+    fi.el.style.opacity = '0';
+    fi.el.style.transform = 'translateX(-50%) scale(0.2)';
+    setTimeout(() => { if (fi.el?.parentNode) fi.el.remove(); }, 200);
+  }
+
+  if (isCorrect) {
+    handleCorrectSort(binEl);
+    checkLevelUp();
+  } else {
+    handleWrongSort(binEl);
+  }
+
+  updateCurrentItem();
+}
+
+// ══════════════════════════════════════════════
+// ── SCORING ──
+// ══════════════════════════════════════════════
+
+function handleCorrectSort(binEl) {
+  state.correctCount++;
+  state.levelCorrect++;
+  state.levelStreak++;
+
+  const pts = CONFIG.BASE_POINTS * state.combo;
+  state.score += pts;
+  state.combo = Math.min(state.combo + 1, CONFIG.MAX_COMBO);
+  state.maxCombo = Math.max(state.maxCombo, state.combo);
+  state.timeLeft = Math.min(state.timeLeft + CONFIG.TIME_BONUS_CORRECT, getLevelDuration(state.level));
+
+  updateScore(state.score);
+  popScore();
+  updateCombo(state.combo);
+  bumpCombo();
+  flashBin(binEl, true);
+  floatPoints('+' + pts, true, binEl);
+  flashScreen('correct');
+
+  const tier = getComboTier(state.combo);
+  if (tier) showComboTier(tier);
+
+  if (state.levelStreak > 0 && state.levelStreak % CONFIG.STREAK_BONUS_THRESHOLD === 0) {
+    state.timeLeft = Math.min(state.timeLeft + CONFIG.STREAK_BONUS_TIME, getLevelDuration(state.level) + 10);
+    showStreakBonus();
+  }
+}
+
+function handleWrongSort(binEl) {
+  const wasCombo = state.combo;
+  state.combo = 1;
+  state.levelStreak = 0;
+  state.timeLeft = Math.max(state.timeLeft - CONFIG.TIME_PENALTY_WRONG, 0);
+  updateCombo(1);
+  flashBin(binEl, false);
+  floatPoints('-' + CONFIG.TIME_PENALTY_WRONG + 's', false, binEl);
+  screenShake();
+  flashScreen('wrong');
+  showComboReset(wasCombo);
+}
+
+function checkLevelUp() {
+  state.itemsSinceLevel++;
+  // Level up is now handled by timer (onLevelTimeUp), not by item count
+}
+
+// ══════════════════════════════════════════════
+// ── STREAK BONUS ──
+// ══════════════════════════════════════════════
+
+function showStreakBonus() {
+  let el = document.getElementById('streak-bonus-label');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'streak-bonus-label';
+    el.className = 'streak-bonus-label';
+    document.body.appendChild(el);
+  }
+  el.textContent = '⏰ +' + CONFIG.STREAK_BONUS_TIME + 's STREAK!';
+  el.classList.remove('show');
+  void el.offsetWidth;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 800);
+}
+
+// ══════════════════════════════════════════════
+// ── LEVEL TIME UP ──
+// ══════════════════════════════════════════════
+
+function onLevelTimeUp() {
+  state.gameActive = false;
+  stopGameLoop();
+  clearFallingItems();
+
+  // Show "Zeit abgelaufen!" flash first
+  const flash = document.getElementById('time-up-flash');
+  if (flash) {
+    flash.classList.remove('hidden', 'show');
+    void flash.offsetWidth;
+    flash.classList.add('show');
+  }
+
+  // After flash, show level result
+  setTimeout(() => {
+    if (flash) flash.classList.add('hidden');
+    const accuracy = getLevelAccuracy();
+    if (accuracy >= CONFIG.LEVEL_MIN_ACCURACY) {
+      showLevelComplete(accuracy);
+    } else {
+      showLevelFailed(accuracy);
+    }
+  }, 1200);
+}
+
+function showLevelComplete(accuracy) {
+  const setText = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
+  setText('level-complete-title', 'Level ' + state.level + ' geschafft!');
+  setText('lc-score', state.score);
+  setText('lc-accuracy', accuracy + '%');
+  setText('lc-combo', '×' + state.maxCombo);
+  const streakEl = document.getElementById('level-complete-streak');
+  if (streakEl) {
+    streakEl.textContent = state.levelCorrect + ' richtig, ' + (state.levelTotal - state.levelCorrect) + ' Fehler';
+  }
+  document.getElementById('level-complete-overlay')?.classList.remove('hidden');
+  // Player clicks "Nächstes Level" manually - no auto-advance
+}
+
+// Called by "Nächstes Level" button
+export function continueToNextLevel() {
+  hideLevelOverlays();
+  const prevLevel = state.level;
+  const prevHotspot = state.currentHotspot;
+  state.level++;
+  setupLevel(state.level);
+  const nextHotspot = state.currentHotspot;
+  showLevelUpFlash(state.level);
+
+  // Always show preview for next level (even same hotspot)
+  if (hotspotChanges(prevLevel, state.level)) {
+    setTimeout(() => showTransition(prevHotspot, nextHotspot, () => showLevelPreview()), CONFIG.LEVEL_UP_FLASH_DURATION);
+  } else {
+    setTimeout(() => showLevelPreview(), CONFIG.LEVEL_UP_FLASH_DURATION);
+  }
+}
+
+function showLevelFailed(accuracy) {
+  const setText = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
+  setText('level-failed-title', 'Level ' + state.level + ' nicht bestanden');
+  setText('lf-accuracy', accuracy + '%');
+  setText('lf-correct', state.levelCorrect);
+  setText('lf-errors', state.levelTotal - state.levelCorrect);
+  document.getElementById('level-failed-overlay')?.classList.remove('hidden');
+  // Player chooses: Retry or End Run - no auto-advance
+}
+
+// Called by "Nochmal versuchen" button
+export function retryLevel() {
+  hideLevelOverlays();
+  // Reset per-level stats but keep run score
+  showLevelPreview();
+}
+
+// Called by "Run beenden" button
+export function endRunFromFail() {
+  hideLevelOverlays();
+  endRun();
+}
+
+function hideLevelOverlays() {
+  document.getElementById('level-complete-overlay')?.classList.add('hidden');
+  document.getElementById('level-failed-overlay')?.classList.add('hidden');
+  document.getElementById('time-up-flash')?.classList.add('hidden');
+}
+
+// ══════════════════════════════════════════════
+// ── END RUN ──
+// ══════════════════════════════════════════════
+
+function endRun() {
+  state.gameActive = false;
+  state.gameOver = true;
+  stopTimer();
+  stopGameLoop();
+  clearFallingItems();
+  const coinsEarned = earnCoins(state.score);
+  const prevHs = getHighscore();
+  const isNewHs = state.score > prevHs;
+  if (isNewHs) setHighscore(state.score);
+  showDeliverySequence({
+    score: state.score, correctCount: state.correctCount, totalItems: state.totalItems,
+    maxCombo: state.maxCombo, level: state.level, coinsEarned, isNewHighscore: isNewHs,
+    hotspot: state.currentHotspot,
+  }, (results) => showResultsScreen(results));
+}
+
+function clearFallingItems() {
+  state.fallingItems.forEach(fi => { if (fi.el?.parentNode) fi.el.remove(); });
+  state.fallingItems = [];
+  state.currentItem = null;
+  state.itemEl = null;
+}
+
+// ══════════════════════════════════════════════
+// ── PAUSE ──
+// ══════════════════════════════════════════════
+
+export function togglePause() {
+  if (!state.gameActive) return;
+  state.paused = !state.paused;
+  if (state.paused) { showPause(state.level, state.score); }
+  else { hidePause(); lastFrameTime = performance.now(); }
+}
+
+export function quitGame() { state.paused = false; hidePause(); endRun(); }
+
+export function quitToHub() {
+  state.gameActive = false; state.paused = false; hidePause();
+  stopTimer(); stopGameLoop(); clearFallingItems(); showHub();
+}
+
+// ══════════════════════════════════════════════
+// ── HUB NAVIGATION ──
+// ══════════════════════════════════════════════
+
+export function goToHub() { showHub(); }
+export function replayLastRun() { startGame(); }
+export function openShop() { renderShop(); showScreen('screen-shop'); }
+export function openAvatar() {
+  renderAvatarScreen();
+  const el = document.getElementById('avatar-coins');
+  if (el) el.textContent = getBalance();
+  showScreen('screen-avatar');
+}
+export function openProfile() { renderProfileScreen(); showScreen('screen-profile'); }
+export function saveProfileName() {
+  const input = document.getElementById('profile-edit-name');
+  if (input && input.value.trim()) { saveName(); renderProfileScreen(); }
+}
+export { playAsGuest, saveName, handleLogout } from '../auth/auth-screen.js';
