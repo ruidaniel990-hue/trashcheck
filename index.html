@@ -48,17 +48,23 @@
     <div class="hs-val" id="hs-display">0</div>
   </div>
 
-  <div class="how-to">
-    <div class="how-title">So geht's</div>
-    <div class="how-row"><span class="how-icon">⬇️</span>Müll fällt von oben</div>
-    <div class="how-row"><span class="how-icon">👈</span>Wisch nach links oder rechts</div>
-    <div class="how-row"><span class="how-icon">👇</span>Runter halten = schneller fallen</div>
-    <div class="how-row"><span class="how-icon">⚡</span>3 zufällige Tonnen pro Runde</div>
-    <div class="how-row"><span class="how-icon">☢️</span>Vorsicht: Sondermüll!</div>
+  <button class="start-btn" onclick="startGame()">🚀 Spielen!</button>
+
+  <div class="start-actions">
+    <button class="start-action" onclick="openLevelMap()">
+      <span class="start-action-icon">🗺️</span>
+      <span class="start-action-label">Level-Karte</span>
+    </button>
+    <button class="start-action" onclick="openShop()">
+      <span class="start-action-icon">🛒</span>
+      <span class="start-action-label">Shop</span>
+    </button>
+    <button class="start-action" onclick="openAvatar()">
+      <span class="start-action-icon">👤</span>
+      <span class="start-action-label">Avatar</span>
+    </button>
   </div>
 
-  <button class="start-btn" onclick="startGame()">🚀 Spielen!</button>
-  <button class="start-btn-secondary" onclick="openLevelMap()">🗺️ Level-Karte</button>
   <div class="start-toggles">
     <button class="start-toggle" id="btn-mute-start" onclick="toggleMuteBtn()">🔊 Sound</button>
     <button class="start-toggle" id="btn-haptic-start" onclick="toggleHapticBtn()">📳 Vibration</button>

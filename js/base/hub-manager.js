@@ -77,14 +77,16 @@ export function showResultsScreen(results) {
   showScreen('screen-results');
 }
 
-// Show the hub/base screen
+// Show the hub/base screen → redirects to start screen
 export function showHub() {
   const setText = (id, text) => {
     const el = document.getElementById(id);
     if (el) el.textContent = text;
   };
 
+  // Update start screen data
+  setText('start-coins', getBalance());
   setText('hub-coins', getBalance());
 
-  showScreen('screen-hub');
+  showScreen('screen-start');
 }
