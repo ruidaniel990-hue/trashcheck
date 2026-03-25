@@ -1022,6 +1022,7 @@
   font-weight: 900;
   color: var(--cyan);
   flex: 1;
+  text-align: center;
 }
 
 .shop-coins-display {
