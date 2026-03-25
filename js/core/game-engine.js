@@ -567,7 +567,7 @@ export { playAsGuest, saveName, handleLogout } from '../auth/auth-screen.js';
 
 export function toggleMuteBtn() {
   const muted = toggleMute();
-  setMusicMuted(muted);
+  // Only mutes sound effects, NOT music (music has its own button)
   const label = muted ? '🔇 Sound aus' : '🔊 Sound an';
   const labelShort = muted ? '🔇 Sound' : '🔊 Sound';
   document.querySelectorAll('#btn-mute, #btn-mute-start').forEach(el => {
