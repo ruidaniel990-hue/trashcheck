@@ -149,6 +149,7 @@
     </div>
     <div style="display:flex;align-items:center;gap:6px;">
       <button id="btn-sound" class="btn-pause" onclick="toggleMuteBtn()">🔊</button>
+      <button id="btn-music" class="btn-pause" onclick="toggleMusicInGame()">🎵</button>
       <div style="text-align:right;">
         <div style="font-size:1.1rem;font-weight:900;color:var(--cyan)" id="hud-timer">60</div>
         <div class="hud-label">Sek</div>
@@ -390,6 +391,10 @@
       <div class="settings-toggle-row">
         <span>Hintergrundmusik</span>
         <button class="settings-toggle-btn" id="settings-music-toggle" onclick="toggleMusicBtn()">AN</button>
+      </div>
+      <div class="settings-toggle-row" style="margin-top:10px;">
+        <span>Lautstärke</span>
+        <input type="range" id="settings-music-volume" min="0" max="100" value="30" style="width:120px;accent-color:var(--cyan);" oninput="setMusicVolumeFromSlider(this.value)">
       </div>
       <div class="settings-section-title" style="margin-top:16px;">🎧 Song</div>
       <div class="settings-presets" id="settings-tracks"></div>

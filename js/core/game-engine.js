@@ -23,7 +23,7 @@ import { getActiveEffects } from '../shop/shop-manager.js';
 import { renderAvatarScreen } from '../avatar/avatar-screen.js';
 import { playSound, initAudio, toggleMute, isMuted, setSoundStyle } from '../effects/audio-manager.js';
 import { vibrate, toggleHaptic, isHapticEnabled } from '../effects/haptic-manager.js';
-import { startMusic, stopMusic, crossfadeTo, setMusicMuted, TRACK_LIST, setTrack, getCurrentTrack } from '../effects/music-manager.js';
+import { startMusic, stopMusic, crossfadeTo, setMusicMuted, TRACK_LIST, setTrack, getCurrentTrack, setMusicVolume as _setMusicVolume, getMusicVolume, toggleMusicPause, isMusicPaused } from '../effects/music-manager.js';
 import { hasProfile, getDisplayName } from '../auth/auth-manager.js';
 import { playAsGuest, saveName, renderProfileScreen, updateStartScreenProfile, handleLogout } from '../auth/auth-screen.js';
 
@@ -615,6 +615,9 @@ export function openSettings() {
     musicBtn.classList.toggle('off', musicOff);
   }
 
+  const volSlider = document.getElementById('settings-music-volume');
+  if (volSlider) volSlider.value = Math.round(getMusicVolume() * 100);
+
   const hapticBtn = document.getElementById('settings-haptic-toggle');
   if (hapticBtn) {
     const hapticOff = localStorage.getItem('tc_haptic_off') === '1';
@@ -648,6 +651,18 @@ export function setMusicTrack(key) {
   document.querySelectorAll('[data-track]').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.track === key);
   });
+}
+
+// In-game music pause/resume button
+export function toggleMusicInGame() {
+  const paused = toggleMusicPause();
+  const btn = document.getElementById('btn-music');
+  if (btn) btn.textContent = paused ? '⏸' : '🎵';
+}
+
+// Settings: music volume slider
+export function setMusicVolumeFromSlider(val) {
+  _setMusicVolume(val / 100); // slider is 0-100, volume is 0-1
 }
 
 export function toggleMusicBtn() {

@@ -223,7 +223,7 @@ function startMp3(trackKey) {
   const src = track.src;
   mp3Audio = new Audio(src);
   mp3Audio.loop = true;
-  mp3Audio.volume = isMuted() || localStorage.getItem('tc_music_off') === '1' ? 0 : 0.15;
+  mp3Audio.volume = isMuted() || localStorage.getItem('tc_music_off') === '1' ? 0 : musicVolume;
   mp3Audio.play().catch(() => {}); // may fail without user gesture
 }
 
@@ -275,15 +275,41 @@ export function crossfadeTo(hotspotId) {
   }
 }
 
+let musicVolume = parseFloat(localStorage.getItem('tc_music_volume') || '0.15');
+let musicPaused = false;
+
 export function setMusicMuted(muted) {
-  // MP3 player
   if (mp3Audio) {
-    mp3Audio.volume = muted ? 0 : 0.15;
+    mp3Audio.volume = muted ? 0 : musicVolume;
   }
-  // Procedural
   if (masterGain && audioCtx) {
     const now = audioCtx.currentTime;
     masterGain.gain.setValueAtTime(masterGain.gain.value, now);
     masterGain.gain.linearRampToValueAtTime(muted ? 0 : MASTER_VOL, now + 0.15);
   }
 }
+
+export function setMusicVolume(val01) {
+  musicVolume = val01;
+  localStorage.setItem('tc_music_volume', val01);
+  if (mp3Audio && !musicPaused && localStorage.getItem('tc_music_off') !== '1') {
+    mp3Audio.volume = val01;
+  }
+}
+
+export function getMusicVolume() { return musicVolume; }
+
+export function toggleMusicPause() {
+  if (!mp3Audio) return false;
+  if (musicPaused) {
+    mp3Audio.play().catch(() => {});
+    mp3Audio.volume = musicVolume;
+    musicPaused = false;
+  } else {
+    mp3Audio.pause();
+    musicPaused = true;
+  }
+  return musicPaused;
+}
+
+export function isMusicPaused() { return musicPaused; }
