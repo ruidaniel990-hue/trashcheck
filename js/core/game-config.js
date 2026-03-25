@@ -8,9 +8,9 @@ export const CONFIG = {
   INITIAL_SPAWN_DELAY: 600,   // ms before first item spawns
 
   // ── Level Progression ──
-  LEVEL_BASE_DURATION: 30,    // seconds for level 1
-  LEVEL_DURATION_INCREASE: 2, // extra seconds per level (harder = more time)
-  LEVEL_MAX_DURATION: 45,     // cap
+  LEVEL_BASE_DURATION: 60,    // seconds per level
+  LEVEL_DURATION_INCREASE: 0, // no increase - always 60s
+  LEVEL_MAX_DURATION: 60,     // cap
   LEVEL_MIN_ACCURACY: 50,     // % accuracy needed to pass a level
   LEVEL_COMPLETE_DELAY: 2000, // ms to show level result before next
 
@@ -20,14 +20,14 @@ export const CONFIG = {
   MISS_PENALTY_POINTS: 0,
 
   // Time adjustments
-  TIME_BONUS_CORRECT: 0.5,    // seconds gained on correct sort
+  TIME_BONUS_CORRECT: 0,      // no bonus for correct - 60s if perfect
   TIME_PENALTY_WRONG: 2,      // seconds lost on wrong sort
   TIME_PENALTY_MISS: 1.5,     // seconds lost when item falls off screen
   TIME_BONUS_LEVEL_UP: 0,     // no bonus anymore (levels have own timer)
 
   // ── Streak Time Bonus ──
   STREAK_BONUS_THRESHOLD: 5,  // every N correct in a row = bonus time
-  STREAK_BONUS_TIME: 3,       // seconds added per streak
+  STREAK_BONUS_TIME: 0,       // no time bonus - 60s is the limit
 
   // Economy
   COINS_PER_SCORE_UNIT: 5,
