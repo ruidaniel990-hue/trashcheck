@@ -44,6 +44,9 @@ export const state = {
   itemEl: null,
   fallTimer: null,
 
+  // Equipment
+  comboShieldCharges: 0,     // shields remaining this level (from Scanner)
+
   // Input tracking
   swipeStartX: 0,
   swipeStartY: 0,
@@ -74,6 +77,7 @@ export function resetState() {
   state.currentItem = null;
   state.itemEl = null;
   state.fallTimer = null;
+  state.comboShieldCharges = 0;
   state.swipeStartX = 0;
   state.swipeStartY = 0;
   state.swiping = false;

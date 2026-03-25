@@ -7,6 +7,8 @@ import {
   continueToNextLevel, retryLevel, endRunFromFail,
   openProfile, saveProfileName,
   playAsGuest, saveName, handleLogout,
+  openLevelMap,
+  toggleMuteBtn, toggleHapticBtn,
 } from './core/game-engine.js';
 import { setupInput } from './core/game-input.js';
 
@@ -29,6 +31,9 @@ window.saveProfileName = saveProfileName;
 window.playAsGuest = playAsGuest;
 window.saveName = saveName;
 window.handleLogout = handleLogout;
+window.openLevelMap = openLevelMap;
+window.toggleMuteBtn = toggleMuteBtn;
+window.toggleHapticBtn = toggleHapticBtn;
 
 // Boot
 window.addEventListener('load', () => {

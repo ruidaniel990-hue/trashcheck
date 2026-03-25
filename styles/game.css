@@ -38,8 +38,8 @@
 
 /* Pause button */
 .btn-pause {
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   background: rgba(26, 35, 50, 0.9);
   border: 1px solid var(--border);
@@ -151,6 +151,26 @@
   color: var(--text);
   margin-top: 4px;
 }
+
+.pause-toggles {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.pause-toggle {
+  padding: 10px 16px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--text);
+  font-family: 'Nunito', sans-serif;
+  font-weight: 800;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.pause-toggle:active { transform: scale(0.95); }
 
 /* ══════ FALL ZONE ══════ */
 .fall-zone {

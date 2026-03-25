@@ -58,6 +58,23 @@
   </div>
 
   <button class="start-btn" onclick="startGame()">🚀 Spielen!</button>
+  <button class="start-btn-secondary" onclick="openLevelMap()">🗺️ Level-Karte</button>
+  <div class="start-toggles">
+    <button class="start-toggle" id="btn-mute-start" onclick="toggleMuteBtn()">🔊 Sound</button>
+    <button class="start-toggle" id="btn-haptic-start" onclick="toggleHapticBtn()">📳 Vibration</button>
+  </div>
+</div>
+
+<!-- ══════ LEVEL MAP SCREEN ══════ -->
+<div class="screen hidden" id="screen-levelmap">
+  <div class="shop-header">
+    <button class="back-btn" onclick="goToHub()">←</button>
+    <div class="shop-title">Level-Karte</div>
+    <div class="shop-coins-display">🪙 <span id="map-coins">0</span></div>
+  </div>
+  <div class="levelmap-scroll" id="levelmap-scroll">
+    <div class="levelmap-path" id="levelmap-path"></div>
+  </div>
 </div>
 
 <!-- ══════ LEVEL PREVIEW SCREEN ══════ -->
@@ -178,6 +195,10 @@
     <button class="pause-btn resume" onclick="togglePause()">▶ Weiterspielen</button>
     <button class="pause-btn quit" onclick="quitToHub()">🏠 Zur Base</button>
     <button class="pause-btn quit" onclick="quitGame()" style="opacity:0.6;font-size:0.85rem;">✕ Runde beenden</button>
+    <div class="pause-toggles">
+      <button class="pause-toggle" id="btn-mute" onclick="toggleMuteBtn()">🔊 Sound an</button>
+      <button class="pause-toggle" id="btn-haptic" onclick="toggleHapticBtn()">📳 Vibration an</button>
+    </div>
   </div>
 
   <div class="timer-wrap">
@@ -252,10 +273,15 @@
     <div class="hub-coins">🪙 <span id="hub-coins">0</span></div>
   </div>
   <div class="hub-content">
-    <button class="hub-action hub-action-primary" onclick="startGame()">
+    <button class="hub-action hub-action-primary" onclick="openLevelMap()">
       <span class="hub-action-icon">🗺️</span>
-      <span class="hub-action-label">Nächster Run</span>
-      <span class="hub-action-sub">Weiter zum nächsten Hotspot</span>
+      <span class="hub-action-label">Level-Karte</span>
+      <span class="hub-action-sub">Level auswählen & wiederholen</span>
+    </button>
+    <button class="hub-action" onclick="startGame()">
+      <span class="hub-action-icon">▶️</span>
+      <span class="hub-action-label">Weiter spielen</span>
+      <span class="hub-action-sub">Nächstes ungeschafftes Level</span>
     </button>
     <button class="hub-action" onclick="openShop()">
       <span class="hub-action-icon">🛒</span>

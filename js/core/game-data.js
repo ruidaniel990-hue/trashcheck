@@ -26,8 +26,8 @@ export const CATEGORIES = {
       { emoji: '🫙', name: 'Einmachglas' },
       { emoji: '🍶', name: 'Glasflasche' },
       { emoji: '🥂', name: 'Sektflasche' },
-      { emoji: '🧪', name: 'Laborfläschchen' },
-      { emoji: '💊', name: 'Medizinflasche' },
+      { emoji: '🍯', name: 'Honigglas' },
+      { emoji: '🫗', name: 'Trinkglas' },
     ],
   },
   papier: {

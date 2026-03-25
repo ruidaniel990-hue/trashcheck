@@ -9,6 +9,7 @@ import { CONFIG } from './game-config.js';
 let onMoveCallback = null;    // (item, laneIndex)
 let onSoftDropCallback = null; // (active)
 let touchedItem = null;        // the specific item being dragged
+let movedDuringTouch = false;  // prevent double-move on touchend
 
 export function setupInput(zone, onMove, onSoftDrop) {
   onMoveCallback = onMove;
@@ -59,6 +60,7 @@ function handleStart(e) {
 
   // Find which item the player is touching
   touchedItem = findTouchedItem(x, y);
+  movedDuringTouch = false;
 }
 
 function handleMove(e) {
@@ -72,7 +74,7 @@ function handleMove(e) {
   // Visual: move the touched item horizontally
   if (touchedItem && touchedItem.el) {
     const pct = 50 + (dx / window.innerWidth) * CONFIG.SWIPE_VISUAL_MULTIPLIER;
-    touchedItem.el.style.transition = 'none'; // disable glide during drag
+    touchedItem.el.style.transition = 'none';
     touchedItem.el.style.left = pct + '%';
   }
 
@@ -85,6 +87,7 @@ function handleMove(e) {
       const lane = dx < 0 ? 0 : 2;
       touchedItem.el.style.transition = 'left 0.15s ease-out';
       onMoveCallback(touchedItem, lane);
+      movedDuringTouch = true;
       clearHighlights();
       // Reset for next swipe and find new nearest item
       state.swipeStartX = x;
@@ -116,8 +119,8 @@ function handleEnd(e) {
     touchedItem.el.style.left = LANE_X[touchedItem.lane];
   }
 
-  // Fallback: check final swipe on release
-  if (touchedItem && onMoveCallback) {
+  // Fallback: check final swipe on release (only if not already moved during drag)
+  if (touchedItem && onMoveCallback && !movedDuringTouch) {
     const { x, y } = getXY(e);
     const dx = x - state.swipeStartX;
     const dy = y - state.swipeStartY;

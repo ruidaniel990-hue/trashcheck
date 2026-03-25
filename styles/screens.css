@@ -325,6 +325,193 @@
   text-align: center;
 }
 
+.start-btn-secondary {
+  width: 100%;
+  max-width: 280px;
+  padding: 14px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  color: var(--text);
+  font-family: 'Nunito', sans-serif;
+  font-weight: 900;
+  font-size: 0.9rem;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.start-btn-secondary:active { transform: scale(0.96); }
+
+.start-toggles {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.start-toggle {
+  padding: 10px 18px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  color: var(--text);
+  font-family: 'Nunito', sans-serif;
+  font-weight: 800;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.start-toggle:active { transform: scale(0.95); }
+.start-toggle.toggle-off { opacity: 0.4; }
+.pause-toggle.toggle-off { opacity: 0.4; }
+
+/* ══════ LEVEL MAP SCREEN ══════ */
+.levelmap-scroll {
+  position: absolute;
+  top: calc(max(14px, env(safe-area-inset-top)) + 50px);
+  bottom: 0;
+  left: 0;
+  right: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  display: flex;
+  flex-direction: column-reverse; /* bottom = level 1, scroll up = higher levels */
+}
+
+.levelmap-path {
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: center;
+  padding: 30px 20px max(30px, env(safe-area-inset-bottom));
+  gap: 0;
+  min-height: 100%;
+}
+
+.levelmap-node {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  transition: transform 0.2s;
+  margin: 8px 0;
+}
+
+.levelmap-node:active { transform: scale(0.95); }
+
+.levelmap-node.left { align-self: flex-start; margin-left: 15%; }
+.levelmap-node.center { align-self: center; }
+.levelmap-node.right { align-self: flex-end; margin-right: 15%; }
+
+.levelmap-node.locked {
+  cursor: default;
+  opacity: 0.35;
+  filter: grayscale(0.8);
+}
+
+.levelmap-node-bg {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 3px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: all 0.3s;
+}
+
+.levelmap-node.completed .levelmap-node-bg {
+  border-color: var(--green);
+  box-shadow: 0 0 12px var(--green-glow);
+}
+
+.levelmap-node.current .levelmap-node-bg {
+  border-color: var(--cyan);
+  box-shadow: 0 0 20px var(--cyan-glow);
+  animation: currentPulse 2s ease-in-out infinite;
+}
+
+@keyframes currentPulse {
+  0%, 100% { box-shadow: 0 0 20px var(--cyan-glow); transform: scale(1); }
+  50% { box-shadow: 0 0 30px var(--cyan-glow); transform: scale(1.05); }
+}
+
+.levelmap-node.unlocked .levelmap-node-bg {
+  border-color: rgba(255, 204, 0, 0.5);
+}
+
+.levelmap-node-icon {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.levelmap-node-level {
+  font-size: 0.6rem;
+  font-weight: 900;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.levelmap-node.current .levelmap-node-level { color: var(--cyan); }
+.levelmap-node.completed .levelmap-node-level { color: var(--green); }
+
+.levelmap-stars {
+  font-size: 0.7rem;
+  margin-top: 4px;
+  letter-spacing: 1px;
+}
+
+.levelmap-node-name {
+  font-size: 0.6rem;
+  font-weight: 800;
+  color: var(--muted);
+  margin-top: 2px;
+  text-align: center;
+}
+
+.levelmap-current-badge {
+  position: absolute;
+  top: -18px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.5rem;
+  font-weight: 900;
+  color: var(--cyan);
+  background: rgba(0, 212, 255, 0.15);
+  border: 1px solid rgba(0, 212, 255, 0.3);
+  border-radius: 8px;
+  padding: 2px 8px;
+  white-space: nowrap;
+  animation: badgeBounce 1.5s ease-in-out infinite;
+}
+
+@keyframes badgeBounce {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50% { transform: translateX(-50%) translateY(-3px); }
+}
+
+.levelmap-lock {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 1.2rem;
+  pointer-events: none;
+}
+
+.levelmap-connector {
+  width: 3px;
+  height: 40px;
+  background: linear-gradient(180deg, var(--border), rgba(0, 212, 255, 0.2));
+  border-radius: 2px;
+}
+
+.levelmap-connector.left { align-self: flex-start; margin-left: calc(15% + 30px); transform: rotate(15deg); }
+.levelmap-connector.center { align-self: center; }
+.levelmap-connector.right { align-self: flex-end; margin-right: calc(15% + 30px); transform: rotate(-15deg); }
+
 /* ══════ LEVEL PREVIEW SCREEN ══════ */
 .preview-hotspot-icon {
   font-size: 3.5rem;

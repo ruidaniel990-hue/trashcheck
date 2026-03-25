@@ -1,17 +1,29 @@
-// ── Haptic Manager [P3] ──
+// ── Haptic Manager ──
 // Vibration API for mobile feedback.
 
+let enabled = true;
+
 export function vibrate(pattern = 'light') {
-  // TODO [P3]: Trigger haptic feedback
-  // Patterns: 'light' (correct), 'heavy' (wrong), 'double' (combo), 'long' (levelup)
-  if (!navigator.vibrate) return;
+  if (!enabled || !navigator.vibrate) return;
 
   const patterns = {
     light: [15],
-    heavy: [40],
+    medium: [30],
+    heavy: [50],
     double: [15, 50, 15],
+    triple: [15, 40, 15, 40, 15],
     long: [80],
+    error: [40, 30, 40],
   };
 
   navigator.vibrate(patterns[pattern] || patterns.light);
+}
+
+export function toggleHaptic() {
+  enabled = !enabled;
+  return enabled;
+}
+
+export function isHapticEnabled() {
+  return enabled;
 }

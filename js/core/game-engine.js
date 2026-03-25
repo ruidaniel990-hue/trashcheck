@@ -16,8 +16,14 @@ import { getHotspotForLevel } from '../level/level-definitions.js';
 import { getLevelFallTime, getLevelSpawnDelay, getItemsToComplete, hotspotChanges } from '../level/level-manager.js';
 import { setCurrentHotspot, getHotspotBinPreview } from '../hotspot/hotspot-manager.js';
 import { showDeliverySequence, showResultsScreen, showHub } from '../base/hub-manager.js';
+import { renderLevelMap } from '../level/level-map.js';
+import { recordLevelComplete, getMaxUnlockedLevel } from '../level/level-progress.js';
 import { renderShop } from '../shop/shop-screen.js';
+import { getActiveEffects } from '../shop/shop-manager.js';
 import { renderAvatarScreen } from '../avatar/avatar-screen.js';
+import { playSound, initAudio, toggleMute, isMuted } from '../effects/audio-manager.js';
+import { vibrate, toggleHaptic, isHapticEnabled } from '../effects/haptic-manager.js';
+import { startMusic, stopMusic, crossfadeTo, setMusicMuted } from '../effects/music-manager.js';
 import { hasProfile, getDisplayName } from '../auth/auth-manager.js';
 import { playAsGuest, saveName, renderProfileScreen, updateStartScreenProfile, handleLogout } from '../auth/auth-screen.js';
 
@@ -95,6 +101,7 @@ function showTransition(fromHotspot, toHotspot, callback) {
 // ══════════════════════════════════════════════
 
 export function initStart() {
+  initAudio();
   if (!hasProfile()) { showScreen('screen-auth'); return; }
   const setText = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
   setText('hs-display', getHighscore());
@@ -129,7 +136,10 @@ export function startLevel() {
   state.gameActive = true;
   softDropActive = false;
   spawnTimer = 0;
+  // Load combo shield charges from equipment
+  state.comboShieldCharges = getActiveEffects().comboShield;
   showScreen('screen-game');
+  startMusic(state.currentHotspot?.id || 'park');
   startTimer(() => onLevelTimeUp());
   lastFrameTime = performance.now();
   startGameLoop();
@@ -168,7 +178,7 @@ function updateFallingItems(dt) {
   for (let i = state.fallingItems.length - 1; i >= 0; i--) {
     const fi = state.fallingItems[i];
     fi.y += fallSpeed * dt;
-    if (fi.el) fi.el.style.top = fi.y + '%';
+    if (fi.el) fi.el.style.transform = `translateX(-50%) translateY(${fi.y}vh)`;
     if (fi.y >= CONFIG.FALL_MISS_Y) handleLanding(fi, i);
   }
 }
@@ -200,18 +210,20 @@ function spawnItem() {
 
   const el = document.createElement('div');
   el.className = 'swipe-item spawn';
-  el.style.left = LANE_X[1]; // start in center lane
-  el.style.top = CONFIG.FALL_START_Y + '%';
-  el.style.transform = 'translateX(-50%)';
-  el.style.transition = 'left 0.15s ease-out'; // smooth lane glide
+  const spawnLane = Math.floor(Math.random() * 3);
+  el.style.left = LANE_X[spawnLane];
+  el.style.top = '0';
+  el.style.transform = `translateX(-50%) translateY(${CONFIG.FALL_START_Y}vh)`;
+  el.style.transition = 'left 0.15s ease-out';
   el.innerHTML = `<div class="item-emoji">${item.emoji}</div><div class="item-name">${item.name}</div>`;
   zone.appendChild(el);
 
-  const fi = { el, emoji: item.emoji, name: item.name, bin: binKey, y: CONFIG.FALL_START_Y, lane: 1 };
+  const fi = { el, emoji: item.emoji, name: item.name, bin: binKey, y: CONFIG.FALL_START_Y, lane: spawnLane };
   state.fallingItems.push(fi);
   state.totalItems++;
   state.levelTotal++;
   updateCurrentItem();
+  playSound('spawn');
 }
 
 function updateCurrentItem() {
@@ -252,15 +264,13 @@ function handleLanding(fi, index) {
   // Animate item shrinking into bin
   if (fi.el) {
     fi.el.style.transition = 'all 0.2s ease-in';
-    fi.el.style.top = '76%';
     fi.el.style.opacity = '0';
-    fi.el.style.transform = 'translateX(-50%) scale(0.2)';
+    fi.el.style.transform = `translateX(-50%) translateY(76vh) scale(0.2)`;
     setTimeout(() => { if (fi.el?.parentNode) fi.el.remove(); }, 200);
   }
 
   if (isCorrect) {
     handleCorrectSort(binEl);
-    checkLevelUp();
   } else {
     handleWrongSort(binEl);
   }
@@ -281,7 +291,9 @@ function handleCorrectSort(binEl) {
   state.score += pts;
   state.combo = Math.min(state.combo + 1, CONFIG.MAX_COMBO);
   state.maxCombo = Math.max(state.maxCombo, state.combo);
-  state.timeLeft = Math.min(state.timeLeft + CONFIG.TIME_BONUS_CORRECT, getLevelDuration(state.level));
+  const effects = getActiveEffects();
+  const timeBonus = CONFIG.TIME_BONUS_CORRECT + effects.timeBonusCorrect;
+  state.timeLeft = Math.min(state.timeLeft + timeBonus, getLevelDuration(state.level));
 
   updateScore(state.score);
   popScore();
@@ -290,18 +302,41 @@ function handleCorrectSort(binEl) {
   flashBin(binEl, true);
   floatPoints('+' + pts, true, binEl);
   flashScreen('correct');
+  playSound('correct');
+  vibrate('light');
 
   const tier = getComboTier(state.combo);
-  if (tier) showComboTier(tier);
+  if (tier) {
+    showComboTier(tier);
+    playSound('comboTier');
+    vibrate('double');
+  }
 
   if (state.levelStreak > 0 && state.levelStreak % CONFIG.STREAK_BONUS_THRESHOLD === 0) {
     state.timeLeft = Math.min(state.timeLeft + CONFIG.STREAK_BONUS_TIME, getLevelDuration(state.level) + 10);
     showStreakBonus();
+    playSound('streak');
+    vibrate('triple');
   }
 }
 
 function handleWrongSort(binEl) {
   const wasCombo = state.combo;
+
+  // Combo Shield: absorb the hit instead of resetting combo
+  if (state.comboShieldCharges > 0 && wasCombo > 1) {
+    state.comboShieldCharges--;
+    state.levelStreak = 0;
+    // Reduced time penalty when shielded
+    state.timeLeft = Math.max(state.timeLeft - CONFIG.TIME_PENALTY_WRONG * 0.5, 0);
+    flashBin(binEl, false);
+    floatPoints('🛡️ SHIELD!', false, binEl);
+    flashScreen('wrong');
+    playSound('shield');
+    vibrate('medium');
+    return;
+  }
+
   state.combo = 1;
   state.levelStreak = 0;
   state.timeLeft = Math.max(state.timeLeft - CONFIG.TIME_PENALTY_WRONG, 0);
@@ -311,11 +346,8 @@ function handleWrongSort(binEl) {
   screenShake();
   flashScreen('wrong');
   showComboReset(wasCombo);
-}
-
-function checkLevelUp() {
-  state.itemsSinceLevel++;
-  // Level up is now handled by timer (onLevelTimeUp), not by item count
+  playSound('wrong');
+  vibrate('error');
 }
 
 // ══════════════════════════════════════════════
@@ -377,6 +409,9 @@ function showLevelComplete(accuracy) {
     streakEl.textContent = state.levelCorrect + ' richtig, ' + (state.levelTotal - state.levelCorrect) + ' Fehler';
   }
   document.getElementById('level-complete-overlay')?.classList.remove('hidden');
+  recordLevelComplete(state.level, state.score, accuracy);
+  playSound('levelup');
+  vibrate('long');
   // Player clicks "Nächstes Level" manually - no auto-advance
 }
 
@@ -392,6 +427,7 @@ export function continueToNextLevel() {
 
   // Always show preview for next level (even same hotspot)
   if (hotspotChanges(prevLevel, state.level)) {
+    crossfadeTo(nextHotspot?.id || 'park');
     setTimeout(() => showTransition(prevHotspot, nextHotspot, () => showLevelPreview()), CONFIG.LEVEL_UP_FLASH_DURATION);
   } else {
     setTimeout(() => showLevelPreview(), CONFIG.LEVEL_UP_FLASH_DURATION);
@@ -405,6 +441,8 @@ function showLevelFailed(accuracy) {
   setText('lf-correct', state.levelCorrect);
   setText('lf-errors', state.levelTotal - state.levelCorrect);
   document.getElementById('level-failed-overlay')?.classList.remove('hidden');
+  playSound('levelfail');
+  vibrate('heavy');
   // Player chooses: Retry or End Run - no auto-advance
 }
 
@@ -437,6 +475,7 @@ function endRun() {
   stopTimer();
   stopGameLoop();
   clearFallingItems();
+  stopMusic();
   const coinsEarned = earnCoins(state.score);
   const prevHs = getHighscore();
   const isNewHs = state.score > prevHs;
@@ -462,15 +501,15 @@ function clearFallingItems() {
 export function togglePause() {
   if (!state.gameActive) return;
   state.paused = !state.paused;
-  if (state.paused) { showPause(state.level, state.score); }
-  else { hidePause(); lastFrameTime = performance.now(); }
+  if (state.paused) { showPause(state.level, state.score); setMusicMuted(true); }
+  else { hidePause(); setMusicMuted(false); lastFrameTime = performance.now(); }
 }
 
-export function quitGame() { state.paused = false; hidePause(); endRun(); }
+export function quitGame() { state.paused = false; hidePause(); stopMusic(); endRun(); }
 
 export function quitToHub() {
   state.gameActive = false; state.paused = false; hidePause();
-  stopTimer(); stopGameLoop(); clearFallingItems(); showHub();
+  stopTimer(); stopGameLoop(); clearFallingItems(); stopMusic(); showHub();
 }
 
 // ══════════════════════════════════════════════
@@ -478,6 +517,26 @@ export function quitToHub() {
 // ══════════════════════════════════════════════
 
 export function goToHub() { showHub(); }
+
+export function openLevelMap() {
+  renderLevelMap((level) => {
+    // Start a specific level from the map
+    resetState();
+    resetHUD();
+    state.level = level;
+    setupLevel(level);
+    showLevelPreview();
+  });
+  showScreen('screen-levelmap');
+}
+
+export function startGameFromMap(level) {
+  resetState();
+  resetHUD();
+  state.level = level;
+  setupLevel(level);
+  showLevelPreview();
+}
 export function replayLastRun() { startGame(); }
 export function openShop() { renderShop(); showScreen('screen-shop'); }
 export function openAvatar() {
@@ -492,3 +551,24 @@ export function saveProfileName() {
   if (input && input.value.trim()) { saveName(); renderProfileScreen(); }
 }
 export { playAsGuest, saveName, handleLogout } from '../auth/auth-screen.js';
+
+export function toggleMuteBtn() {
+  const muted = toggleMute();
+  setMusicMuted(muted);
+  const label = muted ? '🔇 Sound aus' : '🔊 Sound an';
+  const labelShort = muted ? '🔇 Sound' : '🔊 Sound';
+  document.querySelectorAll('#btn-mute, #btn-mute-start').forEach(el => {
+    el.textContent = el.id.includes('start') ? labelShort : label;
+    el.classList.toggle('toggle-off', muted);
+  });
+}
+
+export function toggleHapticBtn() {
+  const enabled = toggleHaptic();
+  const label = enabled ? '📳 Vibration an' : '📴 Vibration aus';
+  const labelShort = enabled ? '📳 Vibration' : '📴 Vibration';
+  document.querySelectorAll('#btn-haptic, #btn-haptic-start').forEach(el => {
+    el.textContent = el.id.includes('start') ? labelShort : label;
+    el.classList.toggle('toggle-off', !enabled);
+  });
+}
