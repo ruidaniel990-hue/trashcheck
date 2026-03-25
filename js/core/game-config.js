@@ -120,8 +120,11 @@ export function getScoreThreshold(score) {
 }
 
 // Get current fall speed based on items sorted so far
+// Every 5 levels: +3 bump. Between: +0.5 per level.
 export function getCurrentFallSpeed(itemsSorted, level) {
-  const base = CONFIG.BASE_FALL_SPEED + (level - 1) * 5;
+  const milestones = Math.floor((level - 1) / 5); // 0 for L1-5, 1 for L6-10, etc.
+  const withinLevel = (level - 1) % 5;             // 0-4 position within the 5-level block
+  const base = CONFIG.BASE_FALL_SPEED + milestones * 3 + withinLevel * 0.5;
   const ramped = base + itemsSorted * CONFIG.FALL_SPEED_RAMP;
   return Math.min(ramped, CONFIG.MAX_FALL_SPEED);
 }
