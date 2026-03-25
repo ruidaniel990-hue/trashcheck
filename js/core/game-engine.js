@@ -23,7 +23,7 @@ import { getActiveEffects } from '../shop/shop-manager.js';
 import { renderAvatarScreen } from '../avatar/avatar-screen.js';
 import { playSound, initAudio, toggleMute, isMuted, setSoundStyle, setSfxVolume, getSfxVolume } from '../effects/audio-manager.js';
 import { vibrate, toggleHaptic, isHapticEnabled } from '../effects/haptic-manager.js';
-import { startMusic, stopMusic, crossfadeTo, setMusicMuted, TRACK_LIST, setTrack, getCurrentTrack, setMusicVolume as _setMusicVolume, getMusicVolume, toggleMusicPause, isMusicPaused } from '../effects/music-manager.js';
+import { startMusic, stopMusic, crossfadeTo, setMusicMuted, TRACK_LIST, setTrack, getCurrentTrack, setMusicVolume as _setMusicVolume, getMusicVolume, toggleMusicPause, isMusicPaused, advanceTrack, setPlayMode, getPlayMode } from '../effects/music-manager.js';
 import { hasProfile, getDisplayName } from '../auth/auth-manager.js';
 import { playAsGuest, saveName, renderProfileScreen, updateStartScreenProfile, handleLogout } from '../auth/auth-screen.js';
 
@@ -139,7 +139,12 @@ export function startLevel() {
   // Load combo shield charges from equipment
   state.comboShieldCharges = getActiveEffects().comboShield;
   showScreen('screen-game');
+  // Advance to next track each round (sequential or shuffle)
+  if (state.level === 1) advanceTrack();
   startMusic(state.currentHotspot?.id || 'park');
+  // Update HUD music button state
+  const musicBtn = document.getElementById('btn-music');
+  if (musicBtn) musicBtn.textContent = '🎵';
   startTimer(() => onLevelTimeUp());
   lastFrameTime = performance.now();
   startGameLoop();
@@ -634,6 +639,12 @@ export function openSettings() {
     btn.classList.toggle('active', btn.dataset.preset === currentPreset);
   });
 
+  // Highlight active play mode
+  const curMode = getPlayMode();
+  document.querySelectorAll('[data-mode]').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.mode === curMode);
+  });
+
   // Render track list
   const trackContainer = document.getElementById('settings-tracks');
   if (trackContainer) {
@@ -659,8 +670,9 @@ export function setMusicTrack(key) {
 // In-game music pause/resume button
 export function toggleMusicInGame() {
   const paused = toggleMusicPause();
-  const btn = document.getElementById('btn-music');
-  if (btn) btn.textContent = paused ? '⏸' : '🎵';
+  const icon = paused ? '⏸' : '🎵';
+  // Update both HUD and start screen buttons
+  document.querySelectorAll('#btn-music, #btn-music-start').forEach(el => el.textContent = icon);
 }
 
 // Settings: music volume slider
@@ -671,6 +683,13 @@ export function setMusicVolumeFromSlider(val) {
 export function setSfxVolumeFromSlider(val) {
   setSfxVolume(val / 100);
   playSound('button'); // preview
+}
+
+export function setPlayModeBtn(mode) {
+  setPlayMode(mode);
+  document.querySelectorAll('[data-mode]').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.mode === mode);
+  });
 }
 
 export function toggleMusicBtn() {

@@ -10,7 +10,7 @@ import {
   openLevelMap,
   toggleMuteBtn, toggleHapticBtn,
   openSettings, toggleMusicBtn, setSoundPreset, setMusicTrack,
-  toggleMusicInGame, setMusicVolumeFromSlider, setSfxVolumeFromSlider,
+  toggleMusicInGame, setMusicVolumeFromSlider, setSfxVolumeFromSlider, setPlayModeBtn,
 } from './core/game-engine.js';
 import { setupInput } from './core/game-input.js';
 
@@ -43,6 +43,7 @@ window.setMusicTrack = setMusicTrack;
 window.toggleMusicInGame = toggleMusicInGame;
 window.setMusicVolumeFromSlider = setMusicVolumeFromSlider;
 window.setSfxVolumeFromSlider = setSfxVolumeFromSlider;
+window.setPlayModeBtn = setPlayModeBtn;
 
 // Boot
 window.addEventListener('load', () => {

@@ -204,11 +204,35 @@ export const TRACK_LIST = Object.entries(TRACKS).map(([key, t]) => ({ key, name:
 let mp3Audio = null;
 let useMp3 = true;
 let currentTrackKey = localStorage.getItem('tc_music_track') || 'trash';
+let playMode = localStorage.getItem('tc_play_mode') || 'sequential'; // 'sequential' or 'shuffle'
+let trackIndex = 0; // for sequential mode
+
+const trackKeys = Object.keys(TRACKS);
+
+export function setPlayMode(mode) {
+  playMode = mode;
+  localStorage.setItem('tc_play_mode', mode);
+}
+
+export function getPlayMode() { return playMode; }
+
+// Pick next track based on play mode
+export function advanceTrack() {
+  if (trackKeys.length <= 1) return;
+  if (playMode === 'shuffle') {
+    let next;
+    do { next = trackKeys[Math.floor(Math.random() * trackKeys.length)]; } while (next === currentTrackKey && trackKeys.length > 1);
+    currentTrackKey = next;
+  } else {
+    trackIndex = (trackKeys.indexOf(currentTrackKey) + 1) % trackKeys.length;
+    currentTrackKey = trackKeys[trackIndex];
+  }
+  localStorage.setItem('tc_music_track', currentTrackKey);
+}
 
 export function setTrack(key) {
   currentTrackKey = key;
   localStorage.setItem('tc_music_track', key);
-  // If music is playing, switch to new track
   if (mp3Audio && !mp3Audio.paused) {
     startMp3(key);
   }

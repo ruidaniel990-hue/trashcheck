@@ -39,7 +39,10 @@
     <div class="start-profile" onclick="openProfile()">
       <span id="start-profile-name">Gast</span> ▾
     </div>
-    <button class="start-toggle-mini" onclick="openSettings()">⚙️</button>
+    <div class="start-topbar-toggles">
+      <button class="start-toggle-mini" id="btn-music-start" onclick="toggleMusicInGame()">🎵</button>
+      <button class="start-toggle-mini" onclick="openSettings()">⚙️</button>
+    </div>
     <div class="coin-display">🪙 <span id="start-coins">0</span></div>
   </div>
 
@@ -399,6 +402,17 @@
       <div class="settings-toggle-row" style="margin-top:10px;">
         <span>Lautstärke</span>
         <input type="range" id="settings-music-volume" min="0" max="100" value="30" style="width:120px;accent-color:var(--cyan);" oninput="setMusicVolumeFromSlider(this.value)">
+      </div>
+      <div class="settings-section-title" style="margin-top:16px;">🔀 Wiedergabe</div>
+      <div class="settings-presets" style="grid-template-columns:1fr 1fr;" id="settings-playmode">
+        <button class="settings-preset active" data-mode="sequential" onclick="setPlayModeBtn('sequential')">
+          <span class="settings-preset-icon">➡️</span>
+          <span class="settings-preset-label">Reihenfolge</span>
+        </button>
+        <button class="settings-preset" data-mode="shuffle" onclick="setPlayModeBtn('shuffle')">
+          <span class="settings-preset-icon">🔀</span>
+          <span class="settings-preset-label">Zufällig</span>
+        </button>
       </div>
       <div class="settings-section-title" style="margin-top:16px;">🎧 Song</div>
       <div class="settings-presets" id="settings-tracks"></div>
