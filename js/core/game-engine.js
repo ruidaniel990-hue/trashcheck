@@ -21,7 +21,7 @@ import { recordLevelComplete, getMaxUnlockedLevel } from '../level/level-progres
 import { renderShop } from '../shop/shop-screen.js';
 import { getActiveEffects } from '../shop/shop-manager.js';
 import { renderAvatarScreen } from '../avatar/avatar-screen.js';
-import { playSound, initAudio, toggleMute, isMuted } from '../effects/audio-manager.js';
+import { playSound, initAudio, toggleMute, isMuted, setSoundStyle } from '../effects/audio-manager.js';
 import { vibrate, toggleHaptic, isHapticEnabled } from '../effects/haptic-manager.js';
 import { startMusic, stopMusic, crossfadeTo, setMusicMuted } from '../effects/music-manager.js';
 import { hasProfile, getDisplayName } from '../auth/auth-manager.js';
@@ -586,4 +586,68 @@ export function toggleHapticBtn() {
     el.textContent = el.id.includes('start') ? labelShort : label;
     el.classList.toggle('toggle-off', !enabled);
   });
+  // Update settings screen toggle
+  const settingsBtn = document.getElementById('settings-haptic-toggle');
+  if (settingsBtn) {
+    settingsBtn.textContent = enabled ? 'AN' : 'AUS';
+    settingsBtn.classList.toggle('off', !enabled);
+  }
+}
+
+// ── Settings Screen ──
+
+export function openSettings() {
+  const setText = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
+  setText('settings-coins', getBalance());
+
+  // Update toggle states
+  const sfxBtn = document.getElementById('settings-sfx-toggle');
+  if (sfxBtn) {
+    const muted = isMuted();
+    sfxBtn.textContent = muted ? 'AUS' : 'AN';
+    sfxBtn.classList.toggle('off', muted);
+  }
+
+  const musicBtn = document.getElementById('settings-music-toggle');
+  if (musicBtn) {
+    const musicOff = localStorage.getItem('tc_music_off') === '1';
+    musicBtn.textContent = musicOff ? 'AUS' : 'AN';
+    musicBtn.classList.toggle('off', musicOff);
+  }
+
+  const hapticBtn = document.getElementById('settings-haptic-toggle');
+  if (hapticBtn) {
+    const hapticOff = localStorage.getItem('tc_haptic_off') === '1';
+    hapticBtn.textContent = hapticOff ? 'AUS' : 'AN';
+    hapticBtn.classList.toggle('off', hapticOff);
+  }
+
+  // Highlight active preset
+  const currentPreset = localStorage.getItem('tc_sound_preset') || 'standard';
+  document.querySelectorAll('.settings-preset').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.preset === currentPreset);
+  });
+
+  showScreen('screen-settings');
+}
+
+export function toggleMusicBtn() {
+  const musicOff = localStorage.getItem('tc_music_off') !== '1';
+  localStorage.setItem('tc_music_off', musicOff ? '1' : '0');
+  setMusicMuted(musicOff);
+  const btn = document.getElementById('settings-music-toggle');
+  if (btn) {
+    btn.textContent = musicOff ? 'AUS' : 'AN';
+    btn.classList.toggle('off', musicOff);
+  }
+}
+
+export function setSoundPreset(preset) {
+  localStorage.setItem('tc_sound_preset', preset);
+  setSoundStyle(preset);
+  document.querySelectorAll('.settings-preset').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.preset === preset);
+  });
+  // Play a preview sound
+  playSound('correct');
 }

@@ -1252,3 +1252,86 @@
   grid-template-columns: 1fr 1fr;
   gap: 10px;
 }
+
+/* ══════ SETTINGS SCREEN ══════ */
+.settings-content {
+  padding: 70px 20px 30px;
+  overflow-y: auto;
+  height: 100%;
+}
+
+.settings-section {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 14px;
+}
+
+.settings-section-title {
+  font-size: 0.75rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--cyan);
+  margin-bottom: 12px;
+}
+
+.settings-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 0;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.settings-toggle-btn {
+  padding: 6px 16px;
+  border-radius: 20px;
+  border: 1px solid var(--green);
+  background: rgba(0, 204, 102, 0.15);
+  color: var(--green);
+  font-family: 'Nunito', sans-serif;
+  font-weight: 900;
+  font-size: 0.75rem;
+  cursor: pointer;
+  pointer-events: all;
+  min-width: 50px;
+  transition: all 0.2s;
+}
+
+.settings-toggle-btn.off {
+  border-color: var(--muted);
+  background: rgba(107, 140, 164, 0.1);
+  color: var(--muted);
+}
+
+.settings-presets {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.settings-preset {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 6px;
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: 14px;
+  color: var(--text);
+  font-family: 'Nunito', sans-serif;
+  cursor: pointer;
+  pointer-events: all;
+  transition: border-color 0.2s, transform 0.15s;
+}
+
+.settings-preset:active { transform: scale(0.93); }
+.settings-preset.active { border-color: var(--cyan); box-shadow: 0 0 12px var(--cyan-glow); }
+
+.settings-preset-icon { font-size: 1.5rem; }
+.settings-preset-label { font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); }
+.settings-preset.active .settings-preset-label { color: var(--cyan); }

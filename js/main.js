@@ -9,6 +9,7 @@ import {
   playAsGuest, saveName, handleLogout,
   openLevelMap,
   toggleMuteBtn, toggleHapticBtn,
+  openSettings, toggleMusicBtn, setSoundPreset,
 } from './core/game-engine.js';
 import { setupInput } from './core/game-input.js';
 
@@ -34,6 +35,9 @@ window.handleLogout = handleLogout;
 window.openLevelMap = openLevelMap;
 window.toggleMuteBtn = toggleMuteBtn;
 window.toggleHapticBtn = toggleHapticBtn;
+window.openSettings = openSettings;
+window.toggleMusicBtn = toggleMusicBtn;
+window.setSoundPreset = setSoundPreset;
 
 // Boot
 window.addEventListener('load', () => {

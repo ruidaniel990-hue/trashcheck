@@ -39,10 +39,7 @@
     <div class="start-profile" onclick="openProfile()">
       <span id="start-profile-name">Gast</span> ▾
     </div>
-    <div class="start-topbar-toggles">
-      <button class="start-toggle-mini" id="btn-mute-start" onclick="toggleMuteBtn()">🔊</button>
-      <button class="start-toggle-mini" id="btn-haptic-start" onclick="toggleHapticBtn()">📳</button>
-    </div>
+    <button class="start-toggle-mini" onclick="openSettings()">⚙️</button>
     <div class="coin-display">🪙 <span id="start-coins">0</span></div>
   </div>
 
@@ -348,6 +345,62 @@
     <div id="avatar-slots"></div>
     <div class="avatar-section-title">Verfügbare Items</div>
     <div id="avatar-items"></div>
+  </div>
+</div>
+
+<!-- ══════ SETTINGS SCREEN ══════ -->
+<div class="screen hidden" id="screen-settings">
+  <div class="shop-header">
+    <button class="back-btn" onclick="initStart()">←</button>
+    <div class="shop-title">Einstellungen</div>
+    <div class="shop-coins-display">🪙 <span id="settings-coins">0</span></div>
+  </div>
+  <div class="settings-content">
+    <!-- Sound Effects -->
+    <div class="settings-section">
+      <div class="settings-section-title">🔊 Sound-Effekte</div>
+      <div class="settings-toggle-row">
+        <span>Sound-Effekte</span>
+        <button class="settings-toggle-btn" id="settings-sfx-toggle" onclick="toggleMuteBtn()">AN</button>
+      </div>
+      <div class="settings-section-title" style="margin-top:16px;">🎵 Tonart</div>
+      <div class="settings-presets" id="settings-presets">
+        <button class="settings-preset active" data-preset="standard" onclick="setSoundPreset('standard')">
+          <span class="settings-preset-icon">🎹</span>
+          <span class="settings-preset-label">Standard</span>
+        </button>
+        <button class="settings-preset" data-preset="retro" onclick="setSoundPreset('retro')">
+          <span class="settings-preset-icon">👾</span>
+          <span class="settings-preset-label">Retro</span>
+        </button>
+        <button class="settings-preset" data-preset="soft" onclick="setSoundPreset('soft')">
+          <span class="settings-preset-icon">🌿</span>
+          <span class="settings-preset-label">Sanft</span>
+        </button>
+        <button class="settings-preset" data-preset="bright" onclick="setSoundPreset('bright')">
+          <span class="settings-preset-icon">✨</span>
+          <span class="settings-preset-label">Hell</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Music -->
+    <div class="settings-section">
+      <div class="settings-section-title">🎶 Musik</div>
+      <div class="settings-toggle-row">
+        <span>Hintergrundmusik</span>
+        <button class="settings-toggle-btn" id="settings-music-toggle" onclick="toggleMusicBtn()">AN</button>
+      </div>
+    </div>
+
+    <!-- Haptics -->
+    <div class="settings-section">
+      <div class="settings-section-title">📳 Vibration</div>
+      <div class="settings-toggle-row">
+        <span>Haptisches Feedback</span>
+        <button class="settings-toggle-btn" id="settings-haptic-toggle" onclick="toggleHapticBtn()">AN</button>
+      </div>
+    </div>
   </div>
 </div>
 
