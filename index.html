@@ -34,9 +34,16 @@
 
 <!-- ══════ START SCREEN ══════ -->
 <div class="screen hidden" id="screen-start">
-  <div class="coin-display">🪙 <span id="start-coins">0</span></div>
-  <div class="start-profile" onclick="openProfile()">
-    <span id="start-profile-name">Gast</span> ▾
+  <!-- Top bar: Profile + Toggles + Coins -->
+  <div class="start-topbar">
+    <div class="start-profile" onclick="openProfile()">
+      <span id="start-profile-name">Gast</span> ▾
+    </div>
+    <div class="start-topbar-toggles">
+      <button class="start-toggle-mini" id="btn-mute-start" onclick="toggleMuteBtn()">🔊</button>
+      <button class="start-toggle-mini" id="btn-haptic-start" onclick="toggleHapticBtn()">📳</button>
+    </div>
+    <div class="coin-display">🪙 <span id="start-coins">0</span></div>
   </div>
 
   <div class="game-logo">♻️</div>
@@ -65,9 +72,14 @@
     </button>
   </div>
 
-  <div class="start-toggles">
-    <button class="start-toggle" id="btn-mute-start" onclick="toggleMuteBtn()">🔊 Sound</button>
-    <button class="start-toggle" id="btn-haptic-start" onclick="toggleHapticBtn()">📳 Vibration</button>
+  <!-- Bottom bar: Social -->
+  <div class="start-social">
+    <button class="start-social-btn" onclick="alert('Freunde – kommt bald!')">
+      <span>👥</span> Freunde
+    </button>
+    <button class="start-social-btn" onclick="alert('Ranking – kommt bald!')">
+      <span>🏅</span> Ranking
+    </button>
   </div>
 </div>
 
