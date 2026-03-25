@@ -44,10 +44,4 @@ window.addEventListener('load', () => {
     setupInput(zone, (item, lane) => moveItemToLane(lane, item), setSoftDrop);
   }
 
-  // Sound toggle button — use touchend to bypass body touch-action:none
-  const soundBtn = document.getElementById('btn-sound');
-  if (soundBtn) {
-    soundBtn.addEventListener('touchend', (e) => { e.preventDefault(); e.stopPropagation(); toggleMuteBtn(); });
-    soundBtn.addEventListener('click', (e) => { e.stopPropagation(); toggleMuteBtn(); });
-  }
 });
