@@ -4,6 +4,7 @@
 let muted = false;
 let audioCtx = null;
 let soundStyle = localStorage.getItem('tc_sound_preset') || 'standard';
+let sfxVolume = parseFloat(localStorage.getItem('tc_sfx_volume') || '1.0');
 
 function getCtx() {
   if (!audioCtx) {
@@ -23,7 +24,7 @@ function playTone(freq, duration, type = 'sine', volume = 0.15, ramp = true) {
   const gain = ctx.createGain();
   osc.type = type;
   osc.frequency.setValueAtTime(freq, ctx.currentTime);
-  gain.gain.setValueAtTime(volume, ctx.currentTime);
+  gain.gain.setValueAtTime(volume * sfxVolume, ctx.currentTime);
   if (ramp) gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
   osc.connect(gain);
   gain.connect(ctx.destination);
@@ -41,7 +42,7 @@ function playNoise(duration, volume = 0.08) {
   const src = ctx.createBufferSource();
   src.buffer = buffer;
   const gain = ctx.createGain();
-  gain.gain.setValueAtTime(volume, ctx.currentTime);
+  gain.gain.setValueAtTime(volume * sfxVolume, ctx.currentTime);
   gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
   const filter = ctx.createBiquadFilter();
   filter.type = 'highpass';
@@ -113,6 +114,13 @@ export function setSoundStyle(preset) {
   soundStyle = preset;
   localStorage.setItem('tc_sound_preset', preset);
 }
+
+export function setSfxVolume(val01) {
+  sfxVolume = val01;
+  localStorage.setItem('tc_sfx_volume', val01);
+}
+
+export function getSfxVolume() { return sfxVolume; }
 
 // Initialize audio context on first user interaction
 export function initAudio() {

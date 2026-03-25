@@ -21,7 +21,7 @@ import { recordLevelComplete, getMaxUnlockedLevel } from '../level/level-progres
 import { renderShop } from '../shop/shop-screen.js';
 import { getActiveEffects } from '../shop/shop-manager.js';
 import { renderAvatarScreen } from '../avatar/avatar-screen.js';
-import { playSound, initAudio, toggleMute, isMuted, setSoundStyle } from '../effects/audio-manager.js';
+import { playSound, initAudio, toggleMute, isMuted, setSoundStyle, setSfxVolume, getSfxVolume } from '../effects/audio-manager.js';
 import { vibrate, toggleHaptic, isHapticEnabled } from '../effects/haptic-manager.js';
 import { startMusic, stopMusic, crossfadeTo, setMusicMuted, TRACK_LIST, setTrack, getCurrentTrack, setMusicVolume as _setMusicVolume, getMusicVolume, toggleMusicPause, isMusicPaused } from '../effects/music-manager.js';
 import { hasProfile, getDisplayName } from '../auth/auth-manager.js';
@@ -608,6 +608,9 @@ export function openSettings() {
     sfxBtn.classList.toggle('off', muted);
   }
 
+  const sfxSlider = document.getElementById('settings-sfx-volume');
+  if (sfxSlider) sfxSlider.value = Math.round(getSfxVolume() * 100);
+
   const musicBtn = document.getElementById('settings-music-toggle');
   if (musicBtn) {
     const musicOff = localStorage.getItem('tc_music_off') === '1';
@@ -662,7 +665,12 @@ export function toggleMusicInGame() {
 
 // Settings: music volume slider
 export function setMusicVolumeFromSlider(val) {
-  _setMusicVolume(val / 100); // slider is 0-100, volume is 0-1
+  _setMusicVolume(val / 100);
+}
+
+export function setSfxVolumeFromSlider(val) {
+  setSfxVolume(val / 100);
+  playSound('button'); // preview
 }
 
 export function toggleMusicBtn() {

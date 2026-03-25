@@ -364,6 +364,10 @@
         <span>Sound-Effekte</span>
         <button class="settings-toggle-btn" id="settings-sfx-toggle" onclick="toggleMuteBtn()">AN</button>
       </div>
+      <div class="settings-toggle-row" style="margin-top:8px;">
+        <span>Lautstärke</span>
+        <input type="range" id="settings-sfx-volume" min="0" max="100" value="100" style="width:120px;accent-color:var(--cyan);" oninput="setSfxVolumeFromSlider(this.value)">
+      </div>
       <div class="settings-section-title" style="margin-top:16px;">🎵 Tonart</div>
       <div class="settings-presets" id="settings-presets">
         <button class="settings-preset active" data-preset="standard" onclick="setSoundPreset('standard')">
