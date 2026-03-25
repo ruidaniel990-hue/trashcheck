@@ -210,7 +210,14 @@ function spawnItem() {
 
   const el = document.createElement('div');
   el.className = 'swipe-item spawn';
-  const spawnLane = Math.floor(Math.random() * 3);
+  // Level 1-14: always center lane. Level 15+: gradually introduce side lanes.
+  let spawnLane = 1; // center
+  if (state.level > 14) {
+    const sideChance = Math.min(0.5, (state.level - 14) * 0.009);
+    if (Math.random() < sideChance) {
+      spawnLane = Math.random() < 0.5 ? 0 : 2;
+    }
+  }
   el.style.left = LANE_X[spawnLane];
   el.style.top = '0';
   el.style.transform = `translateX(-50%) translateY(${CONFIG.FALL_START_Y}vh)`;
@@ -567,6 +574,8 @@ export function toggleMuteBtn() {
     el.textContent = el.id.includes('start') ? labelShort : label;
     el.classList.toggle('toggle-off', muted);
   });
+  const hud = document.getElementById('btn-sound');
+  if (hud) hud.textContent = muted ? '🔇' : '🔊';
 }
 
 export function toggleHapticBtn() {
