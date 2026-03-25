@@ -193,22 +193,51 @@ function startLoop(hotspotId) {
   return { stop() { running = false; } };
 }
 
+// ── MP3 Music Player ──
+const TRACKS = {
+  trash: '/audio/trash.mp3',
+};
+
+let mp3Audio = null;
+let useMp3 = true; // prefer MP3 over procedural
+
+function startMp3(trackKey) {
+  stopMp3();
+  const src = TRACKS[trackKey || 'trash'];
+  if (!src) return;
+  mp3Audio = new Audio(src);
+  mp3Audio.loop = true;
+  mp3Audio.volume = isMuted() || localStorage.getItem('tc_music_off') === '1' ? 0 : 0.15;
+  mp3Audio.play().catch(() => {}); // may fail without user gesture
+}
+
+function stopMp3() {
+  if (mp3Audio) { mp3Audio.pause(); mp3Audio.src = ''; mp3Audio = null; }
+}
+
 // ── Public API ──
 
 export function startMusic(hotspotId) {
-  if (currentLoop) currentLoop.stop();
-  currentHotspot = hotspotId;
-  currentLoop = startLoop(hotspotId);
+  if (useMp3) {
+    startMp3('trash');
+  } else {
+    if (currentLoop) currentLoop.stop();
+    currentHotspot = hotspotId;
+    currentLoop = startLoop(hotspotId);
+  }
 }
 
 export function stopMusic() {
+  stopMp3();
   if (currentLoop) { currentLoop.stop(); currentLoop = null; }
   currentHotspot = null;
 }
 
 export function crossfadeTo(hotspotId) {
+  // MP3 mode: keep playing the same track
+  if (useMp3) return;
+
   if (hotspotId === currentHotspot) return;
-  // Fade out current
   if (masterGain && audioCtx) {
     const now = audioCtx.currentTime;
     masterGain.gain.setValueAtTime(masterGain.gain.value, now);
@@ -231,8 +260,14 @@ export function crossfadeTo(hotspotId) {
 }
 
 export function setMusicMuted(muted) {
-  if (!masterGain || !audioCtx) return;
-  const now = audioCtx.currentTime;
-  masterGain.gain.setValueAtTime(masterGain.gain.value, now);
-  masterGain.gain.linearRampToValueAtTime(muted ? 0 : MASTER_VOL, now + 0.15);
+  // MP3 player
+  if (mp3Audio) {
+    mp3Audio.volume = muted ? 0 : 0.15;
+  }
+  // Procedural
+  if (masterGain && audioCtx) {
+    const now = audioCtx.currentTime;
+    masterGain.gain.setValueAtTime(masterGain.gain.value, now);
+    masterGain.gain.linearRampToValueAtTime(muted ? 0 : MASTER_VOL, now + 0.15);
+  }
 }
