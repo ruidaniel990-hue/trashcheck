@@ -23,7 +23,7 @@ import { getActiveEffects } from '../shop/shop-manager.js';
 import { renderAvatarScreen } from '../avatar/avatar-screen.js';
 import { playSound, initAudio, toggleMute, isMuted, setSoundStyle } from '../effects/audio-manager.js';
 import { vibrate, toggleHaptic, isHapticEnabled } from '../effects/haptic-manager.js';
-import { startMusic, stopMusic, crossfadeTo, setMusicMuted } from '../effects/music-manager.js';
+import { startMusic, stopMusic, crossfadeTo, setMusicMuted, TRACK_LIST, setTrack, getCurrentTrack } from '../effects/music-manager.js';
 import { hasProfile, getDisplayName } from '../auth/auth-manager.js';
 import { playAsGuest, saveName, renderProfileScreen, updateStartScreenProfile, handleLogout } from '../auth/auth-screen.js';
 
@@ -628,7 +628,26 @@ export function openSettings() {
     btn.classList.toggle('active', btn.dataset.preset === currentPreset);
   });
 
+  // Render track list
+  const trackContainer = document.getElementById('settings-tracks');
+  if (trackContainer) {
+    const cur = getCurrentTrack();
+    trackContainer.innerHTML = TRACK_LIST.map(t =>
+      `<button class="settings-preset ${t.key === cur ? 'active' : ''}" data-track="${t.key}" onclick="setMusicTrack('${t.key}')">
+        <span class="settings-preset-icon">🎵</span>
+        <span class="settings-preset-label">${t.name}</span>
+      </button>`
+    ).join('');
+  }
+
   showScreen('screen-settings');
+}
+
+export function setMusicTrack(key) {
+  setTrack(key);
+  document.querySelectorAll('[data-track]').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.track === key);
+  });
 }
 
 export function toggleMusicBtn() {

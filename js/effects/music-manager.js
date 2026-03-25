@@ -195,16 +195,32 @@ function startLoop(hotspotId) {
 
 // ── MP3 Music Player ──
 const TRACKS = {
-  trash: '/audio/trash.mp3',
+  trash: { src: '/audio/trash.mp3', name: 'Trash Bash' },
+  banana: { src: '/audio/shake-it-banana.mp3', name: 'Shake It Banana' },
 };
 
+export const TRACK_LIST = Object.entries(TRACKS).map(([key, t]) => ({ key, name: t.name }));
+
 let mp3Audio = null;
-let useMp3 = true; // prefer MP3 over procedural
+let useMp3 = true;
+let currentTrackKey = localStorage.getItem('tc_music_track') || 'trash';
+
+export function setTrack(key) {
+  currentTrackKey = key;
+  localStorage.setItem('tc_music_track', key);
+  // If music is playing, switch to new track
+  if (mp3Audio && !mp3Audio.paused) {
+    startMp3(key);
+  }
+}
+
+export function getCurrentTrack() { return currentTrackKey; }
 
 function startMp3(trackKey) {
   stopMp3();
-  const src = TRACKS[trackKey || 'trash'];
-  if (!src) return;
+  const track = TRACKS[trackKey || currentTrackKey];
+  if (!track) return;
+  const src = track.src;
   mp3Audio = new Audio(src);
   mp3Audio.loop = true;
   mp3Audio.volume = isMuted() || localStorage.getItem('tc_music_off') === '1' ? 0 : 0.15;
@@ -219,7 +235,7 @@ function stopMp3() {
 
 export function startMusic(hotspotId) {
   if (useMp3) {
-    startMp3('trash');
+    startMp3(currentTrackKey);
   } else {
     if (currentLoop) currentLoop.stop();
     currentHotspot = hotspotId;
