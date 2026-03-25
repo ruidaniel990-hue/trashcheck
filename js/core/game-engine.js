@@ -408,6 +408,12 @@ function showLevelComplete(accuracy) {
   if (streakEl) {
     streakEl.textContent = state.levelCorrect + ' richtig, ' + (state.levelTotal - state.levelCorrect) + ' Fehler';
   }
+  // Show retry button if not perfect
+  const retryBtn = document.getElementById('lc-retry-btn');
+  if (retryBtn) {
+    if (accuracy < 100) retryBtn.classList.remove('hidden');
+    else retryBtn.classList.add('hidden');
+  }
   document.getElementById('level-complete-overlay')?.classList.remove('hidden');
   recordLevelComplete(state.level, state.score, accuracy);
   playSound('levelup');

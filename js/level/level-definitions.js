@@ -1,32 +1,50 @@
 // ── Level Definitions ──
-// Each level maps to a hotspot and defines difficulty scaling.
-// The game progresses through these levels sequentially.
+// 5 sub-levels per hotspot. Difficulty increases gently within a hotspot,
+// then steps up noticeably at each new hotspot.
+// Total: 25 core levels + endless mode beyond.
 
 import { HOTSPOTS } from '../hotspot/hotspot-data.js';
 
-export const LEVELS = [
-  // Level 1-2: Easy hotspots
-  { level: 1, hotspotId: 'park',       itemsToComplete: 8,  fallTimeBonus: 0,    spawnDelayBonus: 0   },
-  { level: 2, hotspotId: 'spielplatz', itemsToComplete: 10, fallTimeBonus: -200,  spawnDelayBonus: -30 },
-  // Level 3-4: Medium
-  { level: 3, hotspotId: 'strasse',    itemsToComplete: 12, fallTimeBonus: -400,  spawnDelayBonus: -60 },
-  { level: 4, hotspotId: 'festival',   itemsToComplete: 14, fallTimeBonus: -600,  spawnDelayBonus: -90 },
-  // Level 5: Hard
-  { level: 5, hotspotId: 'industrie',  itemsToComplete: 16, fallTimeBonus: -900,  spawnDelayBonus: -120 },
-  // Level 6+: Cycle back with increasing speed
-  { level: 6, hotspotId: 'park',       itemsToComplete: 16, fallTimeBonus: -1000, spawnDelayBonus: -140 },
-  { level: 7, hotspotId: 'strasse',    itemsToComplete: 18, fallTimeBonus: -1100, spawnDelayBonus: -150 },
-  { level: 8, hotspotId: 'festival',   itemsToComplete: 18, fallTimeBonus: -1200, spawnDelayBonus: -160 },
-  { level: 9, hotspotId: 'industrie',  itemsToComplete: 20, fallTimeBonus: -1300, spawnDelayBonus: -170 },
-  { level: 10, hotspotId: 'industrie', itemsToComplete: 20, fallTimeBonus: -1400, spawnDelayBonus: -180 },
+// Hotspot stages in order, each with 5 sub-levels
+const STAGES = [
+  { hotspotId: 'park',       baseFall: 0,    baseSpawn: 0,   baseItems: 8  },
+  { hotspotId: 'spielplatz', baseFall: -300,  baseSpawn: -40, baseItems: 10 },
+  { hotspotId: 'strasse',    baseFall: -600,  baseSpawn: -80, baseItems: 12 },
+  { hotspotId: 'festival',   baseFall: -900,  baseSpawn: -120, baseItems: 14 },
+  { hotspotId: 'industrie',  baseFall: -1200, baseSpawn: -160, baseItems: 16 },
 ];
 
-// For levels beyond the defined list, repeat the last level with max difficulty
+const LEVELS_PER_STAGE = 5;
+
+// Gentle per-sub-level increment (within a hotspot)
+const SUB_FALL_STEP = -40;    // very small speed increase per sub-level
+const SUB_SPAWN_STEP = -6;    // very small spawn rate increase
+const SUB_ITEMS_STEP = 1;     // +1 item per sub-level
+
+// Generate all levels
+export const LEVELS = [];
+
+for (let s = 0; s < STAGES.length; s++) {
+  const stage = STAGES[s];
+  for (let sub = 0; sub < LEVELS_PER_STAGE; sub++) {
+    const level = s * LEVELS_PER_STAGE + sub + 1;
+    LEVELS.push({
+      level,
+      hotspotId: stage.hotspotId,
+      stage: s + 1,             // which hotspot stage (1-5)
+      subLevel: sub + 1,        // which sub-level within stage (1-5)
+      itemsToComplete: stage.baseItems + sub * SUB_ITEMS_STEP,
+      fallTimeBonus: stage.baseFall + sub * SUB_FALL_STEP,
+      spawnDelayBonus: stage.baseSpawn + sub * SUB_SPAWN_STEP,
+    });
+  }
+}
+
+// For levels beyond the defined list, repeat last with max difficulty
 export function getLevelDef(level) {
   if (level <= LEVELS.length) {
     return LEVELS[level - 1];
   }
-  // Endless mode: repeat last definition with capped difficulty
   const last = LEVELS[LEVELS.length - 1];
   return { ...last, level, itemsToComplete: 20 };
 }
@@ -34,4 +52,15 @@ export function getLevelDef(level) {
 export function getHotspotForLevel(level) {
   const def = getLevelDef(level);
   return HOTSPOTS.find(h => h.id === def.hotspotId) || HOTSPOTS[0];
+}
+
+// Get stage info for display
+export function getLevelStageInfo(level) {
+  const def = getLevelDef(level);
+  return {
+    stage: def.stage || Math.ceil(level / LEVELS_PER_STAGE),
+    subLevel: def.subLevel || ((level - 1) % LEVELS_PER_STAGE) + 1,
+    totalStages: STAGES.length,
+    levelsPerStage: LEVELS_PER_STAGE,
+  };
 }
