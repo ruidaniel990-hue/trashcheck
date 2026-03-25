@@ -258,22 +258,27 @@ function stopMp3() {
   if (mp3Audio) { mp3Audio.pause(); mp3Audio.src = ''; mp3Audio = null; }
 }
 
-// DJ scratch stop: pitch drops and slows down over ~800ms
+// DJ scratch stop: pitch drops and slows down over ~1.5s
+// Bleeds into the results screen for dramatic effect
 export function scratchStop() {
   if (!mp3Audio) return;
-  // Use Web Audio API for playbackRate control
   const audio = mp3Audio;
   const startRate = audio.playbackRate || 1;
-  const duration = 800; // ms
+  const startVol = audio.volume;
+  const duration = 1500; // ms — long dramatic scratch
   const startTime = performance.now();
 
   function animate(now) {
     const elapsed = now - startTime;
     const progress = Math.min(elapsed / duration, 1);
-    // Ease-out curve: fast drop then slow
-    const rate = startRate * (1 - progress * 0.95);
-    audio.playbackRate = Math.max(rate, 0.05);
-    audio.volume = Math.max(audio.volume * (1 - progress * 0.5), 0);
+    // Eased curve: starts quick, drags out at the end
+    const ease = 1 - Math.pow(1 - progress, 2);
+    // Pitch drops from 1.0 → 0.05 with wobble
+    const wobble = progress > 0.3 ? Math.sin(progress * 12) * 0.03 * (1 - progress) : 0;
+    const rate = startRate * (1 - ease * 0.97) + wobble;
+    audio.playbackRate = Math.max(rate, 0.03);
+    // Volume fades but stays audible until ~80%
+    audio.volume = startVol * Math.max(1 - ease * 1.2, 0);
 
     if (progress < 1) {
       requestAnimationFrame(animate);

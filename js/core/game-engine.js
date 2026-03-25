@@ -399,7 +399,7 @@ function onLevelTimeUp() {
     flash.classList.add('show');
   }
 
-  // After flash, show level result
+  // Results appear while scratch is still fading (~800ms in)
   setTimeout(() => {
     if (flash) flash.classList.add('hidden');
     const accuracy = getLevelAccuracy();
@@ -408,7 +408,7 @@ function onLevelTimeUp() {
     } else {
       showLevelFailed(accuracy);
     }
-  }, 1200);
+  }, 800);
 }
 
 function showLevelComplete(accuracy) {
