@@ -23,7 +23,7 @@ import { getActiveEffects } from '../shop/shop-manager.js';
 import { renderAvatarScreen } from '../avatar/avatar-screen.js';
 import { playSound, initAudio, toggleMute, isMuted, setSoundStyle, setSfxVolume, getSfxVolume } from '../effects/audio-manager.js';
 import { vibrate, toggleHaptic, isHapticEnabled } from '../effects/haptic-manager.js';
-import { startMusic, stopMusic, crossfadeTo, setMusicMuted, TRACK_LIST, setTrack, getCurrentTrack, setMusicVolume as _setMusicVolume, getMusicVolume, toggleMusicPause, isMusicPaused, advanceTrack, setPlayMode, getPlayMode } from '../effects/music-manager.js';
+import { startMusic, stopMusic, crossfadeTo, setMusicMuted, TRACK_LIST, setTrack, getCurrentTrack, setMusicVolume as _setMusicVolume, getMusicVolume, toggleMusicPause, isMusicPaused, advanceTrack, setPlayMode, getPlayMode, scratchStop } from '../effects/music-manager.js';
 import { hasProfile, getDisplayName } from '../auth/auth-manager.js';
 import { playAsGuest, saveName, renderProfileScreen, updateStartScreenProfile, handleLogout } from '../auth/auth-screen.js';
 
@@ -389,6 +389,7 @@ function onLevelTimeUp() {
   state.gameActive = false;
   stopGameLoop();
   clearFallingItems();
+  scratchStop(); // DJ scratch effect on time up
 
   // Show "Zeit abgelaufen!" flash first
   const flash = document.getElementById('time-up-flash');

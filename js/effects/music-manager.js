@@ -258,6 +258,34 @@ function stopMp3() {
   if (mp3Audio) { mp3Audio.pause(); mp3Audio.src = ''; mp3Audio = null; }
 }
 
+// DJ scratch stop: pitch drops and slows down over ~800ms
+export function scratchStop() {
+  if (!mp3Audio) return;
+  // Use Web Audio API for playbackRate control
+  const audio = mp3Audio;
+  const startRate = audio.playbackRate || 1;
+  const duration = 800; // ms
+  const startTime = performance.now();
+
+  function animate(now) {
+    const elapsed = now - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    // Ease-out curve: fast drop then slow
+    const rate = startRate * (1 - progress * 0.95);
+    audio.playbackRate = Math.max(rate, 0.05);
+    audio.volume = Math.max(audio.volume * (1 - progress * 0.5), 0);
+
+    if (progress < 1) {
+      requestAnimationFrame(animate);
+    } else {
+      audio.pause();
+      audio.playbackRate = 1;
+      mp3Audio = null;
+    }
+  }
+  requestAnimationFrame(animate);
+}
+
 // ── Public API ──
 
 export function startMusic(hotspotId) {
