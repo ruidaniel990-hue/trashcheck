@@ -258,49 +258,6 @@ function stopMp3() {
   if (mp3Audio) { mp3Audio.pause(); mp3Audio.src = ''; mp3Audio = null; }
 }
 
-// DJ scratch stop: dramatic vinyl scratch with back-spin effect (~3s)
-export function scratchStop() {
-  if (!mp3Audio) return;
-  const audio = mp3Audio;
-  const startRate = audio.playbackRate || 1;
-  const startVol = audio.volume;
-  const duration = 3000; // ms — really long, dramatic scratch
-  const startTime = performance.now();
-
-  function animate(now) {
-    const elapsed = now - startTime;
-    const progress = Math.min(elapsed / duration, 1);
-
-    if (progress < 0.15) {
-      // Phase 1: quick stutter — rapid pitch jumps (record hand brake)
-      const stutter = Math.sin(elapsed * 0.05) * 0.3;
-      audio.playbackRate = startRate * (1 - progress * 2) + stutter;
-      audio.volume = startVol;
-    } else if (progress < 0.5) {
-      // Phase 2: slow drag down with heavy wobble
-      const p = (progress - 0.15) / 0.35;
-      const wobble = Math.sin(p * 20) * 0.08 * (1 - p);
-      audio.playbackRate = Math.max(0.7 * (1 - p * 0.85) + wobble, 0.05);
-      audio.volume = startVol * (1 - p * 0.3);
-    } else {
-      // Phase 3: deep rumble fade-out — almost stopped
-      const p = (progress - 0.5) / 0.5;
-      const ease = p * p; // accelerating fade
-      const wobble = Math.sin(p * 8) * 0.02 * (1 - p);
-      audio.playbackRate = Math.max(0.1 * (1 - ease * 0.9) + wobble, 0.02);
-      audio.volume = startVol * 0.7 * Math.max(1 - ease * 1.5, 0);
-    }
-
-    if (progress < 1) {
-      requestAnimationFrame(animate);
-    } else {
-      audio.pause();
-      audio.playbackRate = 1;
-      mp3Audio = null;
-    }
-  }
-  requestAnimationFrame(animate);
-}
 
 // ── Public API ──
 
