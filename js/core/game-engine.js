@@ -27,6 +27,85 @@ import { startMusic, stopMusic, crossfadeTo, setMusicMuted, TRACK_LIST, setTrack
 import { hasProfile, getDisplayName } from '../auth/auth-manager.js';
 import { playAsGuest, saveName, renderProfileScreen, updateStartScreenProfile, handleLogout } from '../auth/auth-screen.js';
 
+// ── Tutorial ──
+let tutorialActive = false;
+
+function shouldShowTutorial() {
+  return !localStorage.getItem('tb_tutorial_done');
+}
+
+function startTutorial() {
+  tutorialActive = true;
+  const zone = document.getElementById('fall-zone');
+  if (!zone) return;
+
+  // Pick the first item from the first bin category (e.g. bio → Apfel)
+  const binKey = state.activeBins[0]; // left bin
+  const cat = CATEGORIES[binKey];
+  const item = cat.items[0];
+
+  // Create tutorial item (spawns in center, needs to go LEFT)
+  const el = document.createElement('div');
+  el.className = 'swipe-item spawn';
+  el.id = 'tutorial-item';
+  el.style.left = LANE_X[1]; // center
+  el.style.top = '0';
+  el.style.transform = `translateX(-50%) translateY(25vh)`;
+  el.style.transition = 'left 0.15s ease-out';
+  el.innerHTML = `<div class="item-emoji">${item.emoji}</div><div class="item-name">${item.name}</div>`;
+  zone.appendChild(el);
+
+  // Add to falling items (but pause its fall)
+  const fi = { el, emoji: item.emoji, name: item.name, bin: binKey, y: 25, lane: 1, tutorial: true };
+  state.fallingItems.push(fi);
+  state.currentItem = fi;
+  state.itemEl = fi.el;
+
+  // Create tutorial overlay with finger hint
+  const overlay = document.createElement('div');
+  overlay.className = 'tutorial-overlay';
+  overlay.id = 'tutorial-overlay';
+
+  // Determine swipe direction (item goes to lane 0 = left)
+  const fingerClass = 'swipe-left';
+  overlay.innerHTML = `
+    <div class="tutorial-hint">
+      <span class="tutorial-finger ${fingerClass}">👆</span>
+      <span class="tutorial-hint-text">Wisch den Müll<br>in die richtige Tonne</span>
+    </div>
+  `;
+  zone.appendChild(overlay);
+
+  // Auto-skip after 5 seconds
+  setTimeout(() => {
+    if (tutorialActive) endTutorial();
+  }, 5000);
+}
+
+function endTutorial() {
+  if (!tutorialActive) return;
+  tutorialActive = false;
+  localStorage.setItem('tb_tutorial_done', '1');
+
+  // Fade out overlay
+  const overlay = document.getElementById('tutorial-overlay');
+  if (overlay) {
+    overlay.classList.add('fade-out');
+    setTimeout(() => overlay.remove(), 300);
+  }
+
+  // Remove tutorial item if still there
+  const tutItem = state.fallingItems.find(fi => fi.tutorial);
+  if (tutItem) {
+    const idx = state.fallingItems.indexOf(tutItem);
+    if (idx >= 0) state.fallingItems.splice(idx, 1);
+    if (tutItem.el?.parentNode) tutItem.el.remove();
+  }
+
+  // Start normal game flow
+  setTimeout(() => spawnItem(), 300);
+}
+
 // ── State ──
 let animFrameId = null;
 let lastFrameTime = 0;
@@ -83,7 +162,18 @@ function showLevelPreview() {
       </div>`
     ).join('');
   }
+  applyHotspotBackground('screen-preview', hotspot);
   showScreen('screen-preview');
+}
+
+function applyHotspotBackground(screenId, hotspot) {
+  const el = document.getElementById(screenId);
+  if (!el || !hotspot) return;
+  if (hotspot.bgGradient) {
+    el.style.background = hotspot.bgGradient;
+  } else {
+    el.style.background = hotspot.background || '';
+  }
 }
 
 function showTransition(fromHotspot, toHotspot, callback) {
@@ -92,6 +182,7 @@ function showTransition(fromHotspot, toHotspot, callback) {
   setText('transition-from-name', fromHotspot.name);
   setText('transition-to-icon', toHotspot.icon);
   setText('transition-to-name', toHotspot.name);
+  applyHotspotBackground('screen-transition', toHotspot);
   showScreen('screen-transition');
   setTimeout(callback, 1800);
 }
@@ -138,6 +229,7 @@ export function startLevel() {
   spawnTimer = 0;
   // Load combo shield charges from equipment
   state.comboShieldCharges = getActiveEffects().comboShield;
+  applyHotspotBackground('screen-game', state.currentHotspot);
   showScreen('screen-game');
   // Advance to next track each round (sequential or shuffle)
   if (state.level === 1) advanceTrack();
@@ -148,7 +240,13 @@ export function startLevel() {
   startTimer(() => onLevelTimeUp());
   lastFrameTime = performance.now();
   startGameLoop();
-  setTimeout(() => spawnItem(), CONFIG.INITIAL_SPAWN_DELAY);
+
+  // Show tutorial on first ever play, otherwise normal spawn
+  if (state.level === 1 && shouldShowTutorial()) {
+    setTimeout(() => startTutorial(), 400);
+  } else {
+    setTimeout(() => spawnItem(), CONFIG.INITIAL_SPAWN_DELAY);
+  }
 }
 
 // ══════════════════════════════════════════════
@@ -182,7 +280,9 @@ function updateFallingItems(dt) {
 
   for (let i = state.fallingItems.length - 1; i >= 0; i--) {
     const fi = state.fallingItems[i];
-    fi.y += fallSpeed * dt;
+    // Tutorial items fall much slower
+    const speed = fi.tutorial ? fallSpeed * 0.3 : fallSpeed;
+    fi.y += speed * dt;
     if (fi.el) fi.el.style.transform = `translateX(-50%) translateY(${fi.y}vh)`;
     if (fi.y >= CONFIG.FALL_MISS_Y) handleLanding(fi, i);
   }
@@ -193,6 +293,7 @@ export function setSoftDrop(active) {
 }
 
 function updateSpawnTimer(dt) {
+  if (tutorialActive) return; // No spawning during tutorial
   spawnTimer += dt * 1000;
   const interval = getCurrentSpawnInterval(state.levelTotal, state.level);
   if (spawnTimer >= interval && state.fallingItems.length < 3) {
@@ -267,6 +368,31 @@ export function moveItemToLane(laneIndex, specificItem) {
 // ══════════════════════════════════════════════
 
 function handleLanding(fi, index) {
+  // Tutorial item landing
+  if (fi.tutorial) {
+    state.fallingItems.splice(index, 1);
+    const targetBin = state.activeBins[fi.lane];
+    const isCorrect = targetBin === fi.bin;
+    const binEl = document.getElementById('bin-' + fi.lane);
+    if (fi.el) {
+      fi.el.style.transition = 'all 0.2s ease-in';
+      fi.el.style.opacity = '0';
+      fi.el.style.transform = `translateX(-50%) translateY(76vh) scale(0.2)`;
+      setTimeout(() => { if (fi.el?.parentNode) fi.el.remove(); }, 200);
+    }
+    if (isCorrect) {
+      flashBin(binEl, true);
+      flashScreen('correct');
+      playSound('correct');
+      vibrate('light');
+    } else {
+      flashBin(binEl, false);
+      playSound('wrong');
+    }
+    endTutorial();
+    return;
+  }
+
   state.fallingItems.splice(index, 1);
 
   const targetBin = state.activeBins[fi.lane];

@@ -616,6 +616,13 @@
 .levelmap-connector.right { align-self: flex-end; margin-right: calc(15% + 30px); transform: rotate(-15deg); }
 
 /* ══════ LEVEL PREVIEW SCREEN ══════ */
+#screen-preview {
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  transition: background-color 0.5s ease;
+}
+
 .preview-hotspot-icon {
   font-size: 3.5rem;
   margin-bottom: 8px;

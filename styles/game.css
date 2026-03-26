@@ -1,3 +1,11 @@
+/* ══════ GAME BACKGROUND ══════ */
+#screen-game {
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  transition: background-color 0.5s ease;
+}
+
 /* ══════ GAME HUD ══════ */
 .game-hud {
   position: absolute;
@@ -228,6 +236,67 @@
 .swipe-hint.left { left: 16px; }
 .swipe-hint.right { right: 16px; }
 .swipe-hint.show { opacity: 0.6; }
+
+/* ══════ TUTORIAL OVERLAY ══════ */
+.tutorial-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 45;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.tutorial-hint {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 20px;
+  background: rgba(0, 0, 0, 0.7);
+  border-radius: 20px;
+  border: 1px solid rgba(0, 212, 255, 0.3);
+  margin-top: 20px;
+}
+
+.tutorial-hint-text {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text);
+  opacity: 0.9;
+}
+
+.tutorial-finger {
+  font-size: 2.5rem;
+  animation: tutorialSwipe 1.5s ease-in-out infinite;
+}
+
+.tutorial-finger.swipe-left {
+  animation: tutorialSwipeLeft 1.5s ease-in-out infinite;
+}
+
+.tutorial-finger.swipe-right {
+  animation: tutorialSwipeRight 1.5s ease-in-out infinite;
+}
+
+@keyframes tutorialSwipeLeft {
+  0%, 100% { transform: translateX(30px); opacity: 0.4; }
+  50% { transform: translateX(-30px); opacity: 1; }
+}
+
+@keyframes tutorialSwipeRight {
+  0%, 100% { transform: translateX(-30px); opacity: 0.4; }
+  50% { transform: translateX(30px); opacity: 1; }
+}
+
+.tutorial-overlay.fade-out {
+  animation: tutorialFadeOut 0.3s ease-out forwards;
+}
+
+@keyframes tutorialFadeOut {
+  to { opacity: 0; }
+}
 
 /* ══════ BINS ══════ */
 .bins-row {
