@@ -1,0 +1,14 @@
+{
+  "appId": "com.trashbash.app",
+  "appName": "TrashBash",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  },
+  "android": {
+    "buildOptions": {
+      "keystorePath": null,
+      "keystoreAlias": null
+    }
+  }
+}
