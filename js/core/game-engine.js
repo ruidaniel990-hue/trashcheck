@@ -127,7 +127,10 @@ function renderBins() {
     const c = CATEGORIES[key];
     return `<div class="bin ${c.cls}" id="bin-${i}">
       <div class="bin-arrow">${arrows[i]}</div>
-      <div class="bin-icon">${c.icon}</div>
+      <div class="bin-body">
+        <div class="bin-icon">♻️</div>
+      </div>
+      <div class="bin-wheels"></div>
       <div class="bin-label">${c.name}</div>
     </div>`;
   }).join('');

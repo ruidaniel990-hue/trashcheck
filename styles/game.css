@@ -318,13 +318,14 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  padding: 14px 4px;
-  border-radius: 18px;
-  border: 2px solid;
+  gap: 2px;
+  padding: 8px 4px 6px;
+  border-radius: 16px;
+  border: 1.5px solid;
   transition: all 0.2s;
+  background: rgba(10, 14, 26, 0.6);
 }
-.bin.highlight { transform: scale(1.06); }
+.bin.highlight { transform: scale(1.08); filter: brightness(1.2); }
 
 .bin-icon { font-size: 1.8rem; }
 .bin-label {
@@ -342,10 +343,127 @@
   margin-bottom: 2px;
 }
 
-/* Bin colors */
-.bin-gelb   { background: rgba(255, 200, 0, 0.08);   border-color: rgba(255, 200, 0, 0.4);   color: #ffcc00; }
-.bin-glas   { background: rgba(0, 180, 100, 0.08);    border-color: rgba(0, 180, 100, 0.4);   color: #00cc66; }
-.bin-papier { background: rgba(0, 140, 220, 0.08);    border-color: rgba(0, 140, 220, 0.4);   color: #00d4ff; }
-.bin-bio    { background: rgba(120, 80, 0, 0.12);     border-color: rgba(180, 120, 0, 0.4);   color: #c87800; }
-.bin-rest   { background: rgba(100, 100, 120, 0.08);  border-color: rgba(100, 100, 120, 0.4); color: #8899aa; }
-.bin-sonder { background: rgba(255, 0, 80, 0.08);     border-color: rgba(255, 0, 80, 0.4);    color: #ff3366; }
+/* ══════ BIN DESIGN (Gaming Cartoon Style) ══════ */
+
+/* Base bin body - 3D trash can look */
+.bin {
+  position: relative;
+  overflow: visible;
+}
+
+.bin-body {
+  width: 56px;
+  height: 48px;
+  border-radius: 6px 6px 10px 10px;
+  position: relative;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: inset -4px 0 8px rgba(0,0,0,0.3), inset 4px 0 8px rgba(255,255,255,0.08);
+}
+
+/* Lid on top of bin */
+.bin-body::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: -4px;
+  right: -4px;
+  height: 10px;
+  border-radius: 6px 6px 2px 2px;
+  background: inherit;
+  filter: brightness(1.2);
+  box-shadow: 0 -2px 6px rgba(0,0,0,0.3);
+}
+
+/* Handle on lid */
+.bin-body::after {
+  content: '';
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 16px;
+  height: 5px;
+  border-radius: 3px;
+  background: inherit;
+  filter: brightness(1.4);
+}
+
+/* Recycle symbol inside bin */
+.bin-icon {
+  font-size: 1.3rem;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.4));
+  z-index: 1;
+}
+
+/* Bin glow effect */
+.bin::after {
+  content: '';
+  position: absolute;
+  bottom: -6px;
+  left: 10%;
+  right: 10%;
+  height: 12px;
+  border-radius: 50%;
+  filter: blur(8px);
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* Wheels */
+.bin-wheels {
+  display: flex;
+  justify-content: space-between;
+  width: 44px;
+  margin: 0 auto;
+  margin-top: -2px;
+}
+.bin-wheels::before,
+.bin-wheels::after {
+  content: '';
+  width: 10px;
+  height: 8px;
+  border-radius: 0 0 4px 4px;
+  background: #3a3d4a;
+  box-shadow: inset 0 -2px 3px rgba(0,0,0,0.4);
+}
+
+/* ══════ BIN COLORS ══════ */
+
+/* Gelbe Tonne */
+.bin-gelb { border-color: rgba(255, 200, 0, 0.5); color: #ffcc00; background: transparent; }
+.bin-gelb .bin-body { background: linear-gradient(180deg, #f0c000 0%, #cc9500 60%, #a07000 100%); }
+.bin-gelb::after { background: rgba(255, 200, 0, 0.6); }
+.bin-gelb .bin-label { color: #ffdd44; }
+
+/* Glascontainer */
+.bin-glas { border-color: rgba(0, 180, 100, 0.5); color: #00cc66; background: transparent; }
+.bin-glas .bin-body { background: linear-gradient(180deg, #00cc66 0%, #009944 60%, #006630 100%); }
+.bin-glas::after { background: rgba(0, 200, 100, 0.6); }
+.bin-glas .bin-label { color: #44ee88; }
+
+/* Papiertonne */
+.bin-papier { border-color: rgba(0, 140, 220, 0.5); color: #00d4ff; background: transparent; }
+.bin-papier .bin-body { background: linear-gradient(180deg, #0099ee 0%, #0070cc 60%, #004488 100%); }
+.bin-papier::after { background: rgba(0, 150, 255, 0.6); }
+.bin-papier .bin-label { color: #44ccff; }
+
+/* Biotonne */
+.bin-bio { border-color: rgba(100, 160, 0, 0.5); color: #88cc00; background: transparent; }
+.bin-bio .bin-body { background: linear-gradient(180deg, #66aa00 0%, #448800 60%, #336600 100%); }
+.bin-bio::after { background: rgba(100, 180, 0, 0.6); }
+.bin-bio .bin-label { color: #99dd22; }
+
+/* Restmüll */
+.bin-rest { border-color: rgba(120, 120, 140, 0.5); color: #8899aa; background: transparent; }
+.bin-rest .bin-body { background: linear-gradient(180deg, #667788 0%, #4a5566 60%, #333d48 100%); }
+.bin-rest::after { background: rgba(100, 120, 140, 0.4); }
+.bin-rest .bin-label { color: #99aabb; }
+
+/* Sondermüll */
+.bin-sonder { border-color: rgba(255, 0, 80, 0.5); color: #ff3366; background: transparent; }
+.bin-sonder .bin-body { background: linear-gradient(180deg, #ff2255 0%, #cc0044 60%, #880033 100%); }
+.bin-sonder::after { background: rgba(255, 0, 80, 0.6); }
+.bin-sonder .bin-label { color: #ff5588; }
