@@ -195,11 +195,11 @@ function startLoop(hotspotId) {
 
 // ── MP3 Music Player ──
 const TRACKS = {
-  trash: { src: '/audio/trash.mp3', name: 'Trash Bash' },
-  banana: { src: '/audio/shake-it-banana.mp3', name: 'Shake It Banana' },
-  anthem: { src: '/audio/trash-check-anthem.mp3', name: 'Trash Check Anthem' },
-  trash2: { src: '/audio/trash-2.mp3', name: 'Trash 2' },
-  trash3: { src: '/audio/trash-3.mp3', name: 'Trash 3' },
+  trash: { src: 'audio/trash.mp3', name: 'Trash Bash' },
+  banana: { src: 'audio/shake-it-banana.mp3', name: 'Shake It Banana' },
+  anthem: { src: 'audio/trash-check-anthem.mp3', name: 'Trash Check Anthem' },
+  trash2: { src: 'audio/trash-2.mp3', name: 'Trash 2' },
+  trash3: { src: 'audio/trash-3.mp3', name: 'Trash 3' },
 };
 
 export const TRACK_LIST = Object.entries(TRACKS).map(([key, t]) => ({ key, name: t.name }));
