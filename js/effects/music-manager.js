@@ -251,7 +251,7 @@ function startMp3(trackKey) {
   mp3Audio = new Audio(src);
   mp3Audio.loop = true;
   mp3Audio.volume = isMuted() || localStorage.getItem('tc_music_off') === '1' ? 0 : musicVolume;
-  mp3Audio.play().catch(() => {}); // may fail without user gesture
+  mp3Audio.play().catch(() => {});
 }
 
 function stopMp3() {
