@@ -38,7 +38,10 @@ jobs:
           cp -r audio www/
 
       - name: Capacitor copy
-        run: npx cap copy android
+        run: node node_modules/.bin/cap copy android
+
+      - name: Make gradlew executable
+        run: chmod +x android/gradlew
 
       - name: Build APK
         working-directory: android
