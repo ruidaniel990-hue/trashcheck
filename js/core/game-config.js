@@ -21,7 +21,7 @@ export const CONFIG = {
 
   // Time adjustments
   TIME_BONUS_CORRECT: 0,      // no bonus for correct - 60s if perfect
-  TIME_PENALTY_WRONG: 2,      // seconds lost on wrong sort
+  TIME_PENALTY_WRONG: 3,      // seconds lost on wrong sort - punishing
   TIME_PENALTY_MISS: 1.5,     // seconds lost when item falls off screen
   TIME_BONUS_LEVEL_UP: 0,     // no bonus anymore (levels have own timer)
 
@@ -34,7 +34,7 @@ export const CONFIG = {
   MAX_COINS_PER_GAME: 200,
 
   // Input
-  SWIPE_THRESHOLD: 40,        // lowered from 50 for snappier feel
+  SWIPE_THRESHOLD: 30,        // very responsive swipe detection
   SWIPE_VISUAL_MULTIPLIER: 80,
   SOFT_DROP_MULTIPLIER: 4,    // 4x fall speed when holding down (Tetris-style)
 
@@ -44,9 +44,9 @@ export const CONFIG = {
   FALL_MISS_Y: 72,            // % where item counts as missed (top edge of bins)
 
   // Fall speed (% per second) - items now fall continuously
-  BASE_FALL_SPEED: 22,        // %/s at start - relaxed opening
-  MAX_FALL_SPEED: 55,         // %/s cap - challenging but fair
-  FALL_SPEED_RAMP: 0.25,      // %/s increase per item sorted - gentle curve
+  BASE_FALL_SPEED: 18,        // %/s at start - very relaxed opening
+  MAX_FALL_SPEED: 50,         // %/s cap - challenging but fair
+  FALL_SPEED_RAMP: 0.15,      // %/s increase per item sorted - very gentle
 
   // ── Spawn Timing ──
   BASE_SPAWN_INTERVAL: 2000,  // ms between spawns at start - breathing room
@@ -120,11 +120,11 @@ export function getScoreThreshold(score) {
 }
 
 // Get current fall speed based on items sorted so far
-// Every 5 levels: +3 bump. Between: +0.5 per level.
+// Every 5 levels: +2 bump. Between: +0.3 per level. Ultra-gentle curve.
 export function getCurrentFallSpeed(itemsSorted, level) {
   const milestones = Math.floor((level - 1) / 5); // 0 for L1-5, 1 for L6-10, etc.
   const withinLevel = (level - 1) % 5;             // 0-4 position within the 5-level block
-  const base = CONFIG.BASE_FALL_SPEED + milestones * 3 + withinLevel * 0.5;
+  const base = CONFIG.BASE_FALL_SPEED + milestones * 2 + withinLevel * 0.3;
   const ramped = base + itemsSorted * CONFIG.FALL_SPEED_RAMP;
   return Math.min(ramped, CONFIG.MAX_FALL_SPEED);
 }

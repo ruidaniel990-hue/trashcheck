@@ -84,10 +84,15 @@ function handleMove(e) {
   // INSTANT LANE MOVE: swipe passes threshold = move to lane
   if (touchedItem && onMoveCallback) {
     if (absDx > CONFIG.SWIPE_THRESHOLD && absDx > absDy) {
-const currentLane = touchedItem?.lane ?? 1;
-                      const lane = dx < 0 ? Math.max(0, currentLane - 1) : Math.min(2, currentLane + 1);touchedItem.el.style.transition = 'left 0.15s ease-out';
+      const currentLane = touchedItem?.lane ?? 1;
+      const lane = dx < 0 ? Math.max(0, currentLane - 1) : Math.min(2, currentLane + 1);
+      touchedItem.el.style.transition = 'left 0.12s ease-out';
       onMoveCallback(touchedItem, lane);
       movedDuringTouch = true;
+
+      // Haptic feedback on lane change
+      if (lane !== currentLane && navigator.vibrate) navigator.vibrate(15);
+
       clearHighlights();
       // Reset for next swipe and find new nearest item
       state.swipeStartX = x;
@@ -128,8 +133,9 @@ function handleEnd(e) {
     const absDy = Math.abs(dy);
 
     if (absDx > absDy && absDx > CONFIG.SWIPE_THRESHOLD) {
-const currentLane = touchedItem?.lane ?? 1;
-                  const lane = dx < 0 ? Math.max(0, currentLane - 1) : Math.min(2, currentLane + 1);onMoveCallback(touchedItem, lane);
+      const currentLane = touchedItem?.lane ?? 1;
+      const lane = dx < 0 ? Math.max(0, currentLane - 1) : Math.min(2, currentLane + 1);
+      onMoveCallback(touchedItem, lane);
     }
   }
 
