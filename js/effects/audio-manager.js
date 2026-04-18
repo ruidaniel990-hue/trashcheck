@@ -1,7 +1,7 @@
 // ── Audio Manager ──
 // Synthesized sound effects using Web Audio API. No external files needed.
 
-let muted = false;
+let muted = localStorage.getItem('tc_sfx_muted') === 'true';
 let audioCtx = null;
 let soundStyle = localStorage.getItem('tc_sound_preset') || 'standard';
 let sfxVolume = parseFloat(localStorage.getItem('tc_sfx_volume') || '1.0');
@@ -103,6 +103,7 @@ export function playSound(name) {
 
 export function toggleMute() {
   muted = !muted;
+  localStorage.setItem('tc_sfx_muted', muted);
   return muted;
 }
 

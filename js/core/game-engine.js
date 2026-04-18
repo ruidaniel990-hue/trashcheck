@@ -201,7 +201,30 @@ export function initStart() {
   setText('hs-display', getHighscore());
   setText('start-coins', getBalance());
   updateStartScreenProfile();
+
+  // Sync sound/music UI state on load
+  syncSoundUI();
+
   showScreen('screen-start');
+}
+
+function syncSoundUI() {
+  const sfxMuted = isMuted();
+  // HUD button
+  const hud = document.getElementById('btn-sound');
+  if (hud) hud.textContent = sfxMuted ? '🔇' : '🔊';
+  // Pause menu button
+  document.querySelectorAll('#btn-mute, #btn-mute-start').forEach(el => {
+    const short = el.id.includes('start');
+    el.textContent = sfxMuted ? (short ? '🔇 Sound' : '🔇 Sound aus') : (short ? '🔊 Sound' : '🔊 Sound an');
+    el.classList.toggle('toggle-off', sfxMuted);
+  });
+  // Settings screen toggle
+  const settingsBtn = document.getElementById('settings-sfx-toggle');
+  if (settingsBtn) {
+    settingsBtn.textContent = sfxMuted ? 'AUS' : 'AN';
+    settingsBtn.classList.toggle('off', sfxMuted);
+  }
 }
 
 export function startGame() {
@@ -701,16 +724,8 @@ export function saveProfileName() {
 export { playAsGuest, saveName, handleLogout } from '../auth/auth-screen.js';
 
 export function toggleMuteBtn() {
-  const muted = toggleMute();
-  // Only mutes sound effects, NOT music (music has its own button)
-  const label = muted ? '🔇 Sound aus' : '🔊 Sound an';
-  const labelShort = muted ? '🔇 Sound' : '🔊 Sound';
-  document.querySelectorAll('#btn-mute, #btn-mute-start').forEach(el => {
-    el.textContent = el.id.includes('start') ? labelShort : label;
-    el.classList.toggle('toggle-off', muted);
-  });
-  const hud = document.getElementById('btn-sound');
-  if (hud) hud.textContent = muted ? '🔇' : '🔊';
+  toggleMute();
+  syncSoundUI();
 }
 
 export function toggleHapticBtn() {
